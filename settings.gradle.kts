@@ -24,4 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "finances"
 include(":app")
- 
+include(":core:database")
