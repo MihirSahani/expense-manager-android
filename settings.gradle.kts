@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 rootProject.name = "finances"
 include(":app")
 include(":core:database")
+include(":core:datastore")
