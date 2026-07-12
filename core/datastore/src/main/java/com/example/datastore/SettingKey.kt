@@ -1,6 +1,7 @@
 package com.example.datastore
 
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 
 object SettingKey {
@@ -12,4 +13,6 @@ object SettingKey {
     val CURRENCY = stringPreferencesKey("currency") // *INR
 
     val IS_ONBOARDING_DONE = booleanPreferencesKey("is_onboarding_done") // *false / true
+
+    val SALARY_CREDIT_TIME = longPreferencesKey("salary_credit_time") // *0 / ...
 }

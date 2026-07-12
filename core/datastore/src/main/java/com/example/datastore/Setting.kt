@@ -32,6 +32,10 @@ class Setting(val context: Context) {
         preferences[SettingKey.IS_ONBOARDING_DONE] ?: false
     }
 
+    val salaryCreditTime: Flow<Long> = getSetting { preferences ->
+        preferences[SettingKey.SALARY_CREDIT_TIME] ?: 0L
+    }
+
     suspend fun setUserFirstName(firstName: String) {
         setSetting(SettingKey.USER_FIST_NAME, firstName)
     }
@@ -50,6 +54,10 @@ class Setting(val context: Context) {
 
     suspend fun setOnboardingDone(isOnboardingDone: Boolean) {
         setSetting(SettingKey.IS_ONBOARDING_DONE, isOnboardingDone)
+    }
+
+    suspend fun setSalaryCreditTime(salaryCreditTime: Long) {
+        setSetting(SettingKey.SALARY_CREDIT_TIME, salaryCreditTime)
     }
 
     private fun <T> getSetting(transform: (Preferences) -> T): Flow<T> =

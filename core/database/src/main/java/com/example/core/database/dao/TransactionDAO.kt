@@ -1,5 +1,6 @@
 package com.example.core.database.dao
 
+import androidx.paging.PagingSource
 import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.OnConflictStrategy
@@ -15,7 +16,7 @@ abstract class TransactionDAO {
     abstract suspend fun getTransaction(id: Int): Transaction?
 
     @Query("SELECT * FROM transactions WHERE id = :id")
-    abstract suspend fun getTransactionFlow(id: Int): Flow<Transaction?>
+    abstract fun getTransactionFlow(id: Int): Flow<Transaction?>
 
     @Query("" +
             "SELECT * " +
@@ -23,9 +24,9 @@ abstract class TransactionDAO {
             "WHERE datetime BETWEEN :start AND :end " +
             "ORDER BY datetime DESC"
     )
-    abstract suspend fun getTransactions(start: Long=0, end: Long= Long.MAX_VALUE): List<Transaction>
-
-    // TODO: Add pagination for transactions
+    abstract fun getTransactionsBetween(
+        start: Long=0, end: Long= Long.MAX_VALUE
+    ): PagingSource<Int, Transaction>
 
     // ---------------------------------- Creating Transactions ---------------------------------
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -40,8 +41,8 @@ abstract class TransactionDAO {
 
     @Query("" +
             "UPDATE transactions " +
-            "SET category_id :oldCategoryId " +
-            "WHERE category_id = :newCategoryId"
+            "SET category_id = :newCategoryId " +
+            "WHERE category_id = :oldCategoryId"
     )
     abstract suspend fun updateTransactionsCategory(oldCategoryId: Int, newCategoryId: Int)
 
