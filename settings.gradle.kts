@@ -26,3 +26,5 @@ rootProject.name = "finances"
 include(":app")
 include(":core:database")
 include(":core:datastore")
+include(":feature:transactions:data:repository")
+include(":core:common")
