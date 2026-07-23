@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.map
 
 val Context.settingDataStore: DataStore<Preferences> by preferencesDataStore("app-setting")
 
-class Setting(val context: Context) {
+class Setting (val context: Context) {
     val userFirstName: Flow<String> = getSetting { preferences ->
         preferences[SettingKey.USER_FIST_NAME] ?: "Jane"
     }
