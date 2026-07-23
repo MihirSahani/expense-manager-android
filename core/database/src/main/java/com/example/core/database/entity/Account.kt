@@ -3,6 +3,7 @@ package com.example.core.database.entity
 import androidx.room3.ColumnInfo
 import androidx.room3.Entity
 import androidx.room3.PrimaryKey
+import com.example.core.database.models.AccountType
 
 @Entity("accounts")
 data class Account(
@@ -14,7 +15,7 @@ data class Account(
     @ColumnInfo("balance")
     val balance: Long,
     @ColumnInfo("type")
-    val type: Int,
+    val type: AccountType,
     @ColumnInfo("account_number")
     val accountNumber: String?,
     @ColumnInfo("color")

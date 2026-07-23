@@ -15,7 +15,7 @@ abstract class AccountDAO {
     abstract suspend fun getAccount(id: Int): Account?
 
     @Query("SELECT * FROM accounts WHERE id = :id")
-    abstract suspend fun getAccountFlow(id: Int): Flow<Account?>
+    abstract fun getAccountFlow(id: Int): Flow<Account?>
 
     // TODO: Add pagination for accounts
 

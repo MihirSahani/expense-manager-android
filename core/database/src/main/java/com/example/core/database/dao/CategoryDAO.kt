@@ -6,7 +6,6 @@ import androidx.room3.Insert
 import androidx.room3.Query
 import androidx.room3.Update
 import com.example.core.database.entity.Category
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 abstract class CategoryDAO {
@@ -16,8 +15,12 @@ abstract class CategoryDAO {
 
     // TODO: Add pagination for categories
 
-    @Query("SELECT * FROM categories WHERE ")
-    abstract suspend fun categoriesAtRisk(): Flow<List<Category>>
+    // TODO: implement "categories at risk" — categories whose spend this cycle exceeds
+    //  budget_per_cycle. Needs a JOIN on transactions + the cycle window (start, end):
+    //  SELECT c.* FROM categories c JOIN transactions t ON t.category_id = c.id
+    //  WHERE t.datetime BETWEEN :start AND :end
+    //  GROUP BY c.id HAVING SUM(t.amount) > c.budget_per_cycle
+    //  Return Flow<List<Category>> (not suspend).
 
     // ---------------------------- Create --------------------------------------------
     @Insert
