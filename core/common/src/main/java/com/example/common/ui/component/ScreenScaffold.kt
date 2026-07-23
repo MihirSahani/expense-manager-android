@@ -8,7 +8,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.common.ui.theme.FinancesTheme
 
 @Composable
-fun Screen(title: String, content: @Composable (Modifier) -> Unit) {
+fun ScreenScaffold(title: String, content: @Composable (Modifier) -> Unit) {
     Scaffold(
         topBar = { AppBar(title) },
         bottomBar = {}
@@ -19,16 +19,16 @@ fun Screen(title: String, content: @Composable (Modifier) -> Unit) {
 
 @Preview(showBackground = true)
 @Composable
-fun ScreenPreview() {
+fun ScreenScaffoldPreview() {
     FinancesTheme {
-        Screen(title = "Preview Title") {}
+        ScreenScaffold(title = "Preview Title") {}
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun DarkScreenPreview() {
+fun ScreenScaffoldPreviewDark() {
     FinancesTheme(darkTheme = true) {
-        Screen(title = "Preview Title") {}
+        ScreenScaffold(title = "Preview Title") {}
     }
 }
