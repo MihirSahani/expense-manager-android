@@ -4,6 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Today
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,7 +35,9 @@ fun AppBar(title: String, icon: @Composable () -> Unit = {}) {
 @Composable
 fun AppBarPreview() {
     FinancesTheme {
-        AppBar(title = "Preview Title")
+        AppBar(title = "Preview Title") {
+            Icon(imageVector = Icons.Filled.History, contentDescription = "History Icon")
+        }
     }
 }
 
@@ -40,7 +46,9 @@ fun AppBarPreview() {
 fun DarkAppBarPreview() {
     FinancesTheme(darkTheme = true) {
         Surface {
-            AppBar(title = "Preview Title")
+            AppBar(title = "Preview Title") {
+                Icon(imageVector = Icons.Filled.Today, contentDescription = "Today Icon")
+            }
         }
     }
 }

@@ -3,10 +3,14 @@ package com.example.common.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Samsung One UI Brand Colors
-val SamsungBlue = Color(0xFF1428A0)        // Classic Samsung corporate blue
+val SamsungBlue = Color(0xFF1528A0)        // Official Samsung corporate blue (PMS 293 C, #1528A0)
 val SamsungLightBlue = Color(0xFF1977F3)   // One UI signature accent blue
 val SamsungCyan = Color(0xFF00A3E0)        // One UI cyan accent
 val SamsungMint = Color(0xFF00C389)        // One UI green/mint accent
+
+// One UI secondary / body text grays (list subtitles, timestamps)
+val SamsungTextGrayLight = Color(0xFF8C8C8C) // One UI light-theme secondary text
+val SamsungTextGrayDark = Color(0xFFAEAEAE)  // One UI dark-theme secondary text
 
 // Light Theme Colors (One UI 6 light)
 val LightPrimary = Color(0xFF1977F3)       // One UI signature blue

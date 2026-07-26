@@ -12,6 +12,9 @@ private fun toString(pattern: String, time: Long): String {
         .format(formatter)
 }
 
+fun Long.toDateTimeString(): String {
+    return toString("dd MMM yyyy HH:mm", this)
+}
 fun Long.toDateString(): String {
     return toString("dd MMM yyyy", this)
 }
