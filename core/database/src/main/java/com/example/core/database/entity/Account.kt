@@ -3,6 +3,7 @@ package com.example.core.database.entity
 import androidx.room3.ColumnInfo
 import androidx.room3.Entity
 import androidx.room3.PrimaryKey
+import com.example.core.database.models.AccountIcon
 import com.example.core.database.models.AccountType
 
 @Entity("accounts")
@@ -21,5 +22,5 @@ data class Account(
     @ColumnInfo("color")
     val color: Int?,
     @ColumnInfo("icon")
-    val icon: Int?
+    val icon: AccountIcon
 )

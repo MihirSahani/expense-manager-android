@@ -38,6 +38,8 @@ data class Transaction(
     val categoryId: Int?,
     @ColumnInfo("datetime")
     val datetime: Long,
+    @ColumnInfo("raw_account_no")
+    val rawAccountNo: String?,
     @ColumnInfo("account_id")
     val accountId: Int?,
     @ColumnInfo("payee")

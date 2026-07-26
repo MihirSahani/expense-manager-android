@@ -1,5 +1,6 @@
 package com.example.core.database.dao
 
+import androidx.paging.PagingSource
 import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.OnConflictStrategy
@@ -17,7 +18,11 @@ abstract class AccountDAO {
     @Query("SELECT * FROM accounts WHERE id = :id")
     abstract fun getAccountFlow(id: Int): Flow<Account?>
 
-    // TODO: Add pagination for accounts
+    @Query("SELECT * FROM accounts")
+    abstract fun getAllAccountsFlow(): Flow<List<Account>>
+
+    @Query("SELECT * FROM accounts")
+    abstract fun getAllAccounts(): PagingSource<Int, Account>
 
     // -------------------------------- Creating Accounts ---------------------------
     @Insert(onConflict = OnConflictStrategy.REPLACE)

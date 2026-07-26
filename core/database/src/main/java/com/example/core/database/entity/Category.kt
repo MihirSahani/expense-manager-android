@@ -4,6 +4,7 @@ import androidx.room3.ColumnInfo
 import androidx.room3.Entity
 import androidx.room3.PrimaryKey
 import com.example.core.database.models.CategoryIcon
+import com.example.core.database.models.CategoryType
 
 @Entity("categories")
 data class Category(
@@ -13,7 +14,7 @@ data class Category(
     @ColumnInfo("name")
     val name: String,
     @ColumnInfo("type")
-    val type: Int,
+    val type: CategoryType,
     @ColumnInfo("budget_per_cycle")
     val budgetPerCycle: Long?,
     @ColumnInfo("color")

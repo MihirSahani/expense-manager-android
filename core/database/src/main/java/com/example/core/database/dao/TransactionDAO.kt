@@ -70,7 +70,7 @@ abstract class TransactionDAO {
             "SET category_id = :newCategoryId " +
             "WHERE category_id = :oldCategoryId"
     )
-    abstract suspend fun updateTransactionsCategory(oldCategoryId: Int, newCategoryId: Int)
+    abstract suspend fun updateTransactionsCategory(oldCategoryId: Int?, newCategoryId: Int?)
 
     // ----------------------------------- Deleting Transactions -----------------------------------
     @Query("DELETE FROM transactions WHERE id = :id")
