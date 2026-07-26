@@ -1,4 +1,4 @@
-package com.example.transaction.data.repository
+package com.example.common.repository
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -15,11 +15,12 @@ import kotlinx.coroutines.flow.flatMapLatest
 import java.time.YearMonth
 import java.time.ZoneId
 
-class TransactionRepository @Inject constructor(val setting: Setting, val dao: TransactionDAO) {
-    suspend fun getTransaction(id: Int): Transaction? {
-        return dao.getTransaction(id)
-    }
-
+class TransactionRepository @Inject constructor(
+    val setting: Setting,
+    val dao: TransactionDAO,
+    val accountRepo: AccountRepository,
+    val categoryRepo: CategoryRepository
+) {
     fun getTransactionFlow(id: Int): Flow<Transaction?> {
         return dao.getTransactionFlow(id)
     }
@@ -60,13 +61,16 @@ class TransactionRepository @Inject constructor(val setting: Setting, val dao: T
         dao.updateTransactionCategory(transactionId, categoryId)
     }
 
-    suspend fun updateTransactionsCategory(oldCategoryId: Int, newCategoryId: Int) {
+    suspend fun updateTransactionsCategory(oldCategoryId: Int?, newCategoryId: Int?) {
         dao.updateTransactionsCategory(oldCategoryId, newCategoryId)
     }
 
     suspend fun deleteTransaction(id: Int) {
         dao.deleteById(id)
     }
+
+    val accounts get() = accountRepo.accounts
+    val categories get() = categoryRepo.categories
     private fun getCurrentMonthTransactionsWithCategory(): Flow<PagingData<TransactionWithCategory>> {
         val start = YearMonth.now()
             .atDay(1)
