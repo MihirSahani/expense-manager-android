@@ -1,6 +1,7 @@
 package com.example.transaction.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,10 +14,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.common.ui.theme.FinancesTheme
+import com.example.common.ui.theme.SamsungTextGrayDark
+import com.example.common.ui.theme.SamsungTextGrayLight
 import com.example.common.utils.MyText
 import com.example.common.utils.toTimeString
 import com.example.core.database.entity.Category
@@ -53,7 +55,7 @@ fun TransactionItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 MyText.RowHeader(text = item.payee)
-                MyText.TransactionAmount(amount = item.amount, type = item.transactionType)
+                MyText.TransactionAmount(item.amount, item.transactionType)
             }
 
             Row(
@@ -62,7 +64,8 @@ fun TransactionItem(
             ) {
                 MyText.RowBody(
                     text = item.categoryName ?: "Uncategorized",
-                    color = if (item.categoryName == null) MaterialTheme.colorScheme.error else Color.Gray
+                    color = if (item.categoryName == null) MaterialTheme.colorScheme.error
+                    else if (isSystemInDarkTheme()) SamsungTextGrayDark else SamsungTextGrayLight
                 )
                 MyText.RowBody(item.datetime.toTimeString())
             }
