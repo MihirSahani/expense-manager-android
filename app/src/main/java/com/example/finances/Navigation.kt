@@ -1,14 +1,12 @@
 package com.example.finances
 
 import androidx.compose.runtime.Composable
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.transaction.ui.screens.TransactionHistoryScreen
-import com.example.transaction.ui.viewmodel.TransactionViewModel
+import com.example.transaction.ui.screens.TransactionScreen
 
 @Composable
 fun App() {
@@ -35,7 +33,12 @@ fun App() {
                 navController.navigate(Screen.Transaction(id))
             }
         }
-        composable(Screen.Transaction.ROUTE) {
+        composable(
+            Screen.Transaction.ROUTE,
+            listOf(navArgument("id") {
+                type = androidx.navigation.NavType.IntType
+            })) {
+            TransactionScreen()
         }
         composable(Screen.Settings.route) {
         }
