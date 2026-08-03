@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import com.example.common.ui.component.LazyListOfItems
 import com.example.common.utils.MyText
 
 
@@ -26,7 +27,7 @@ fun SimpleDialog(
         onDismissRequest = onDismiss,
         title = { MyText.SecondaryHeader(title) },
         text = {
-            ListOfItems(
+            LazyListOfItems(
                 items
             ) { item ->
                 MyText.RowHeader(

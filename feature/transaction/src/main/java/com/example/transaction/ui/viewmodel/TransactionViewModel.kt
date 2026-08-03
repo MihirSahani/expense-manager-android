@@ -5,9 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.common.repository.TransactionRepository
 import com.example.core.database.entity.Transaction
+import com.example.core.database.models.TransactionType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -16,9 +18,9 @@ class TransactionViewModel @Inject constructor(
     private val repo: TransactionRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    private val transactionId: Int = checkNotNull(savedStateHandle["id"])
+    private val transactionId: Int? = savedStateHandle["id"]
 
-    val transaction = repo.getTransactionFlow(transactionId)
+    val transaction = (transactionId?.let { repo.getTransactionFlow(transactionId) } ?: flowOf(blankTransaction))
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val accounts = repo.accounts
@@ -54,5 +56,19 @@ class TransactionViewModel @Inject constructor(
         viewModelScope.launch {
             repo.deleteTransaction(id)
         }
+    }
+
+    companion object {
+        val blankTransaction = Transaction(
+            amount = 0L,
+            categoryId = null,
+            accountId = null,
+            datetime = System.currentTimeMillis(),
+            rawAccountNo = "",
+            payee = "",
+            transactionType = TransactionType.DEBIT,
+            referenceId = null,
+            description = null
+        )
     }
 }

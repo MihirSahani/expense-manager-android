@@ -2,8 +2,10 @@ package com.example.transaction.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,7 +39,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.common.ui.component.SingleRowItem
 import com.example.common.utils.MyInput
 import com.example.common.utils.MyText
 import com.example.common.utils.toDateTimeString
@@ -53,7 +57,7 @@ fun AddTransactionContent(
     accounts: List<Account>,
     onAddTransaction: (Transaction) -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    padding: PaddingValues
 ) {
     var payee by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
@@ -70,52 +74,51 @@ fun AddTransactionContent(
     var showDatePickerDialog by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = transactionDate)
 
-    Column(modifier = modifier
-        .padding(horizontal = 16.dp)
-        .fillMaxSize()
-        .verticalScroll(rememberScrollState())) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(top = padding.calculateTopPadding())
+        .padding(horizontal = 16.dp),
+        // .verticalScroll(rememberScrollState())
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
 
         MyInput.TextField(
             value = payee,
             onValueChange = { payee = it },
             label = "Payee",
-            modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(8.dp))
 
         MyInput.TextField(
             value = amount,
             onValueChange = { amount = it },
             label = "Amount",
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(8.dp))
 
-        Row(
-            modifier = Modifier
-                .padding(vertical = 8.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth()
-            ,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            MyText.RowHeader("Type:", modifier = Modifier.padding(end = 16.dp))
-            RadioButton(selected = transactionType == TransactionType.DEBIT, onClick = {
-                transactionType = TransactionType.DEBIT
-                selectedCategory = null
-            })
-            MyText.RowBody("Expense")
-            Spacer(modifier = Modifier.width(16.dp))
-            RadioButton(selected = transactionType == TransactionType.CREDIT, onClick = {
-                transactionType = TransactionType.CREDIT
-                selectedCategory = null
-            })
-            MyText.RowBody("Income")
+        SingleRowItem {
+            MyText.RowBody("Type:")
+            Row {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RadioButton(selected = transactionType == TransactionType.DEBIT, onClick = {
+                        transactionType = TransactionType.DEBIT
+                        selectedCategory = null
+                    })
+                    MyText.RowBody("Expense")
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RadioButton(selected = transactionType == TransactionType.CREDIT, onClick = {
+                        transactionType = TransactionType.CREDIT
+                        selectedCategory = null
+                    })
+                    MyText.RowBody("Income")
+                }
+            }
         }
-        Spacer(modifier = Modifier.height(8.dp))
 
         Box(modifier = Modifier.fillMaxWidth()) {
             MyInput.TextField(
@@ -125,7 +128,6 @@ fun AddTransactionContent(
                 label = "Category",
                 placeholder = "Select Category",
                 trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth()
             )
             Box(
                 modifier = Modifier
@@ -133,8 +135,6 @@ fun AddTransactionContent(
                     .clickable { showCategoryDialog = true }
             )
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         Box(modifier = Modifier.fillMaxWidth()) {
             MyInput.TextField(
@@ -144,7 +144,6 @@ fun AddTransactionContent(
                 label = "Account",
                 placeholder = "Select Account",
                 trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth()
             )
             Box(
                 modifier = Modifier
@@ -153,8 +152,6 @@ fun AddTransactionContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
         Box(modifier = Modifier.fillMaxWidth()) {
             MyInput.TextField(
                 value = (transactionDate / 1000).toDateTimeString(),
@@ -162,7 +159,6 @@ fun AddTransactionContent(
                 readOnly = true,
                 label = "Transaction Date",
                 trailingIcon = { Icon(Icons.Filled.DateRange, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth()
             )
             Box(
                 modifier = Modifier
@@ -171,16 +167,12 @@ fun AddTransactionContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
         MyInput.TextField(
             value = description,
             onValueChange = { description = it },
             label = "Description",
             singleLine = false,
-            modifier = Modifier.fillMaxWidth()
         )
-
-        Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = {

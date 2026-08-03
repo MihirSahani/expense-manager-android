@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import com.example.common.ui.component.LazyListOfItems
 import com.example.common.utils.MyText
 import com.example.core.database.entity.Category
 import com.example.core.database.entity.Transaction
@@ -78,13 +79,16 @@ fun CategoryUpdateDialog(
 
                     Spacer(Modifier.padding(8.dp))
 
-                    ListOfItems(categories) { category ->
+                    LazyListOfItems(categories) { category ->
                         TextButton(
                             onClick = {
                                 val updatedTransaction = transaction.copy(
                                     categoryId = category.id
                                 )
-                                onUpdateCategory(updatedTransaction, updateCategoryForAllTransactionsWithPayee)
+                                onUpdateCategory(
+                                    updatedTransaction,
+                                    updateCategoryForAllTransactionsWithPayee
+                                )
                                 onDismiss()
                             },
                             // modifier = Modifier.fillMaxWidth().padding( horizontal = 8.dp)

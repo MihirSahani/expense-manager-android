@@ -1,4 +1,4 @@
-package com.example.transaction.ui.screens;
+package com.example.transaction.ui.screen;
 
 import androidx.paging.PagingData;
 
