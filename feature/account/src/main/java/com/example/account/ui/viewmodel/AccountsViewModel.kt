@@ -1,4 +1,4 @@
-package com.example.account.viewmodel
+package com.example.account.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,9 +15,17 @@ class AccountsViewModel @Inject constructor(
     private val repo: AccountRepository,
 ) : ViewModel() {
     val accounts = repo.accounts
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            emptyList()
+        )
 
     val netWorth: Flow<Long> = repo.accounts
         .map { accounts -> accounts.sumOf { it.balance } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0L)
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            0L
+        )
 }

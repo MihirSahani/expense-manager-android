@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
@@ -40,6 +41,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.material3)
     implementation(libs.hilt.android)
+    implementation(libs.room3.common.jvm)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
