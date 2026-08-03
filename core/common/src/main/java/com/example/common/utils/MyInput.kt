@@ -12,16 +12,22 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 
 
 class MyInput {
@@ -94,7 +100,8 @@ class MyInput {
                         disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
                         disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                 )
 
                 if (isError && errorMessage.isNotEmpty()) {
@@ -115,11 +122,14 @@ class MyInput {
             modifier: Modifier = Modifier,
             enabled: Boolean = true
         ) {
+            CompositionLocalProvider(
+                LocalMinimumInteractiveComponentSize provides Dp.Unspecified
+            ) {
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
                 enabled = enabled,
-                modifier = modifier.scale(0.7f),
+                modifier = modifier.scaledSize(0.7f),
                 colors = SwitchDefaults.colors(
                     // Checked (ON) state
                     checkedThumbColor = Color.White,
@@ -140,6 +150,7 @@ class MyInput {
                     disabledUncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f)
                 )
             )
+            }
         }
 
         @Composable
@@ -152,16 +163,31 @@ class MyInput {
         ) {
             Box(
                 modifier
-                    .fillMaxHeight()
+                    .fillMaxWidth()
                     .background(
                         color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(20)
+                        shape = RoundedCornerShape(8.dp)
                     )
                     .clickable { onClick() }
-                    .padding(8.dp)
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center
             ) {
                 MyText.RowHeader(text, color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
         }
     }
 }
+
+private fun Modifier.scaledSize(scale: Float): Modifier = this
+    .layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints)
+        val width = (placeable.width * scale).roundToInt()
+        val height = (placeable.height * scale).roundToInt()
+        layout(width, height) {
+            placeable.place(
+                (width - placeable.width) / 2,
+                (height - placeable.height) / 2
+            )
+        }
+    }
+    .scale(scale)

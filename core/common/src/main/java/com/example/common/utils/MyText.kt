@@ -27,7 +27,7 @@ class MyText {
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 16.dp, bottom = 16.dp, top = 16.dp)
+                modifier = Modifier.padding(16.dp)
             )
         }
 
@@ -38,7 +38,7 @@ class MyText {
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 8.dp, top = 8.dp)
+                modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
             )
         }
 
@@ -81,6 +81,24 @@ class MyText {
                 fontWeight = FontWeight.Bold,
                 color = color
                     ?: if (type == TransactionType.DEBIT || amount < 0) Color(0xFF9B2600)
+                    else Color(0xFF02AF34),
+                modifier = modifier
+            )
+        }
+
+        @Composable
+        fun TransactionAmount(
+            amount: Long,
+            modifier: Modifier = Modifier,
+            fontSize: TextUnit = 16.sp,
+            color: Color? = null,
+        ) {
+            Text(
+                text = (amount/100.0).toIndianFormat(),
+                fontSize = fontSize,
+                fontWeight = FontWeight.Bold,
+                color = color
+                    ?: if (amount < 0) Color(0xFF9B2600)
                     else Color(0xFF02AF34),
                 modifier = modifier
             )
