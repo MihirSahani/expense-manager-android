@@ -12,15 +12,15 @@ data class Account(
     @ColumnInfo("id")
     val id: Int = 0,
     @ColumnInfo("name")
-    val name: String,
+    var name: String,
     @ColumnInfo("balance")
-    val balance: Long,
+    var balance: Long,
     @ColumnInfo("type")
-    val type: AccountType,
+    var type: AccountType,
     @ColumnInfo("account_number")
-    val accountNumber: String?,
+    var accountNumber: String?,
     @ColumnInfo("color")
-    val color: Int?,
+    var color: Int?,
     @ColumnInfo("icon")
-    val icon: AccountIcon
+    var icon: AccountIcon
 )

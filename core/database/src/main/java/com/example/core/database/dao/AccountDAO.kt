@@ -13,10 +13,10 @@ import kotlinx.coroutines.flow.Flow
 abstract class AccountDAO {
     // ----------------------------- Fetching Accounts -----------------------------
     @Query("SELECT * FROM accounts WHERE id = :id")
-    abstract suspend fun getAccount(id: Int): Account?
+    abstract suspend fun getAccountById(id: Int): Account?
 
     @Query("SELECT * FROM accounts WHERE id = :id")
-    abstract fun getAccountFlow(id: Int): Flow<Account?>
+    abstract fun getAccountByIdFlow(id: Int): Flow<Account?>
 
     @Query("SELECT * FROM accounts")
     abstract fun getAllAccountsFlow(): Flow<List<Account>>

@@ -15,6 +15,9 @@ abstract class CategoryDAO {
     @Query("SELECT * FROM categories WHERE id = :id")
     abstract suspend fun getCategory(id: Int): Category?
 
+    @Query("SELECT * FROM categories WHERE id = :id")
+    abstract fun getCategoryFlow(id: Int): Flow<Category?>
+
     @Query("SELECT * FROM categories")
     abstract fun getAllCategoriesFlow(): Flow<List<Category>>
 
@@ -35,6 +38,9 @@ abstract class CategoryDAO {
     // ---------------------------- Update --------------------------------------------
     @Update
     abstract suspend fun update(category: Category)
+
+    @Query("UPDATE categories SET budget_per_cycle = :budget WHERE id = :id")
+    abstract suspend fun updateBudget(id: Int, budget: Long?)
 
     // ----------------------------- Delete -------------------------------------------
     @Delete
