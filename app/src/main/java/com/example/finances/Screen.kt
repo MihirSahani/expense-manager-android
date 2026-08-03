@@ -6,7 +6,7 @@ sealed class Screen(val route: String) {
     object Home: Screen("home")
 
     object Accounts: Screen("accounts")
-    data class Account(val id: Int): Screen("account/$id") {
+    data class Account(val id: Int?): Screen("account/$id") {
         companion object {
             const val ROUTE = "account/{id}"
         }
