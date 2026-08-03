@@ -1,5 +1,6 @@
 package com.example.transaction.ui.screens
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Today
@@ -9,6 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.compose.LazyPagingItems
@@ -57,9 +59,9 @@ fun TransactionHistoryScreen(
     ScreenScaffold (
         title = "Transaction History",
         icon = icon
-    ) { modifier ->
+    ) { padding ->
         ListOfTransactions(
-            modifier = modifier,
+            modifier = Modifier.padding(top = padding.calculateTopPadding()),
             items = items,
             onTransactionClick = { transactionId -> onTransactionClick(transactionId) }
         )

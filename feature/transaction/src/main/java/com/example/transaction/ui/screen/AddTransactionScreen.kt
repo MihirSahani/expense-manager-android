@@ -3,6 +3,7 @@ package com.example.transaction.ui.screens
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.common.ui.component.ScreenScaffold
@@ -17,13 +18,13 @@ import com.example.transaction.ui.components.AddTransactionContent
 import com.example.transaction.ui.viewmodel.TransactionViewModel
 
 @Composable
-fun AddTransactionScreen(onDismiss: () -> Unit) {
+fun AddEditTransactionScreen(onDismiss: () -> Unit) {
     val vm: TransactionViewModel = hiltViewModel()
 
     val categories by vm.categories.collectAsStateWithLifecycle()
     val accounts by vm.accounts.collectAsStateWithLifecycle()
 
-    ScreenScaffold("Add Transaction") { modifier ->
+    ScreenScaffold("Add Transaction") { padding ->
 
         AddTransactionContent(
             categories = categories,
@@ -34,15 +35,15 @@ fun AddTransactionScreen(onDismiss: () -> Unit) {
             onDismiss = {
                 onDismiss()
             },
-            modifier = modifier
+            padding = padding
         )
     }
 }
 
 private val previewCategories = listOf(
-    Category(id = 1, name = "Groceries", type = CategoryType.GROCERIES, budgetPerCycle = null, color = null, icon = CategoryIcon.GROCERIES),
-    Category(id = 2, name = "Salary", type = CategoryType.SALARY, budgetPerCycle = null, color = null, icon = CategoryIcon.SALARY),
-    Category(id = 3, name = "Transport", type = CategoryType.TRANSPORT, budgetPerCycle = null, color = null, icon = CategoryIcon.TRANSPORT),
+    Category(id = 1, name = "Groceries", type = CategoryType.EXPENSE, budgetPerCycle = null, color = null, icon = CategoryIcon.GROCERIES),
+    Category(id = 2, name = "Salary", type = CategoryType.INCOME, budgetPerCycle = null, color = null, icon = CategoryIcon.SALARY),
+    Category(id = 3, name = "Transport", type = CategoryType.EXPENSE, budgetPerCycle = null, color = null, icon = CategoryIcon.TRANSPORT),
 )
 
 private val previewAccounts = listOf(
@@ -52,13 +53,13 @@ private val previewAccounts = listOf(
 
 @Composable
 private fun AddTransactionScreenPreviewContent() {
-    ScreenScaffold("Add Transaction") { modifier ->
+    ScreenScaffold("Add Transaction") { padding ->
         AddTransactionContent(
             categories = previewCategories,
             accounts = previewAccounts,
             onAddTransaction = {},
             onDismiss = {},
-            modifier = modifier
+            padding = padding
         )
     }
 }
