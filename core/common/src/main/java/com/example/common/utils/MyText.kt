@@ -40,7 +40,7 @@ class MyText {
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = color ?: MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
         }
 
