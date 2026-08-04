@@ -42,6 +42,9 @@ android {
 dependencies {
     implementation(project(":core:common"))
     implementation(project(":feature:transaction"))
+    implementation(project(":feature:account"))
+    implementation(project(":feature:category"))
+    implementation(project(":feature:setting"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)

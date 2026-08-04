@@ -13,7 +13,8 @@ import com.example.account.ui.viewmodel.AccountViewModel
 import com.example.common.ui.component.ScreenScaffold
 
 @Composable
-fun AddEditAccountScreen(vm: AccountViewModel = hiltViewModel()) {
+fun AddEditAccountScreen(afterSave: () -> Unit = {}) {
+    val vm: AccountViewModel = hiltViewModel()
     val currentAccount by vm.account.collectAsStateWithLifecycle()
 
     ScreenScaffold(
@@ -42,6 +43,7 @@ fun AddEditAccountScreen(vm: AccountViewModel = hiltViewModel()) {
                 else {
                     vm.updateAccount(account)
                 }
+                afterSave()
             },
         )
     }
