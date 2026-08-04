@@ -17,7 +17,7 @@ import com.example.transaction.ui.components.AddTransactionContent
 import com.example.transaction.ui.viewmodel.TransactionViewModel
 
 @Composable
-fun AddEditTransactionScreen(onDismiss: () -> Unit) {
+fun AddTransactionScreen(onDismiss: () -> Unit) {
     val vm: TransactionViewModel = hiltViewModel()
 
     val categories by vm.categories.collectAsStateWithLifecycle()

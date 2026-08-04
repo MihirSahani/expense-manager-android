@@ -13,7 +13,7 @@ import com.example.transaction.ui.components.TransactionDetails
 import com.example.transaction.ui.viewmodel.TransactionViewModel
 
 @Composable
-fun TransactionScreen(viewModel: TransactionViewModel = hiltViewModel()) {
+fun EditTransactionScreen(viewModel: TransactionViewModel = hiltViewModel()) {
     val transaction by viewModel.transaction.collectAsStateWithLifecycle()
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val categories by viewModel.categories.collectAsStateWithLifecycle()

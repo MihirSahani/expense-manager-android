@@ -18,9 +18,9 @@ class TransactionViewModel @Inject constructor(
     private val repo: TransactionRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    private val transactionId: Int? = savedStateHandle["id"]
+    private val transactionId: Int = checkNotNull(savedStateHandle["id"])
 
-    val transaction = (transactionId?.let { repo.getTransactionFlow(transactionId) } ?: flowOf(blankTransaction))
+    val transaction = repo.getTransactionFlow(transactionId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val accounts = repo.accounts
@@ -37,7 +37,7 @@ class TransactionViewModel @Inject constructor(
 
     fun updateTransactionCategory(categoryId: Int?, updateForAllTransactions: Boolean) {
         viewModelScope.launch {
-            if (transaction.value == null) throw IllegalStateException("Transaction is null")
+            if (transaction.value == null) throw IllegalStateException("Transaction is null when trying to update category")
             if (updateForAllTransactions) {
                 repo.updateTransactionsCategoryByPayee(transaction.value!!.payee, categoryId)
             } else {
@@ -57,19 +57,5 @@ class TransactionViewModel @Inject constructor(
         viewModelScope.launch {
             repo.deleteTransaction(id)
         }
-    }
-
-    companion object {
-        val blankTransaction = Transaction(
-            amount = 0L,
-            categoryId = null,
-            accountId = null,
-            datetime = System.currentTimeMillis(),
-            rawAccountNo = "",
-            payee = "",
-            transactionType = TransactionType.DEBIT,
-            referenceId = null,
-            description = null
-        )
     }
 }

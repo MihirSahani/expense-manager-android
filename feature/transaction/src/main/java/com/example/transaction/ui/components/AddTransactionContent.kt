@@ -68,7 +68,7 @@ fun AddTransactionContent(
     var showCategoryDialog by remember { mutableStateOf(false) }
 
     var selectedAccount by remember { mutableStateOf<Account?>(null) }
-    var showAccountDialog by remember { mutableStateOf(true) }
+    var showAccountDialog by remember { mutableStateOf(false) }
 
     var transactionDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var showDatePickerDialog by remember { mutableStateOf(false) }
