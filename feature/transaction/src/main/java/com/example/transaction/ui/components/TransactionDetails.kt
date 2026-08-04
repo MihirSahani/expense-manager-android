@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.common.model.DefaultColors
 import com.example.common.ui.component.ItemAndDivider
 import com.example.common.ui.component.ListOfItems
 import com.example.common.ui.component.ScreenScaffold
@@ -46,7 +47,7 @@ fun TransactionDetails(
     accounts: List<Account>,
     categories: List<Category>,
     onAccountUpdate: (Transaction) -> Unit,
-    onCategoryUpdate: (Transaction, Boolean) -> Unit,
+    onCategoryUpdate: (Int?, Boolean) -> Unit,
     padding: PaddingValues
 ) {
     var showCategoryDialog by remember { mutableStateOf(false) }
@@ -98,8 +99,6 @@ fun TransactionDetails(
                     MyText.RowBody("Date")
                     MyText.RowHeader(transaction.datetime.toDateTimeString())
                 }
-
-
             }
 
             ListOfItems {
@@ -180,9 +179,9 @@ private val sampleTransaction = Transaction(
 )
 
 private val sampleAccounts = listOf(
-    Account(1, "Account 1", 0, AccountType.SAVINGS, "1234", 0xFF0000, AccountIcon.SAVINGS),
-    Account(2, "Account 2", 0, AccountType.CHECKING, "5678", 0x00FF00, AccountIcon.CHECKING),
-    Account(3, "Account 3", 0, AccountType.CASH, "9012", 0x0000FF, AccountIcon.CASH)
+    Account(1, "Account 1", 0, AccountType.SAVINGS, "1234", DefaultColors.RED.hexValue, AccountIcon.SAVINGS),
+    Account(2, "Account 2", 0, AccountType.CHECKING, "5678", DefaultColors.BLUE.hexValue, AccountIcon.CHECKING),
+    Account(3, "Account 3", 0, AccountType.CASH, "9012", DefaultColors.CYAN.hexValue, AccountIcon.CASH)
 )
 
 private val sampleCategories = listOf(

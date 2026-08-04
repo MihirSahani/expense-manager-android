@@ -57,12 +57,12 @@ class TransactionRepository @Inject constructor(
         dao.update(transaction)
     }
 
-    suspend fun updateTransactionCategory(transactionId: Int, categoryId: Int) {
+    suspend fun updateTransactionCategory(transactionId: Int, categoryId: Int?) {
         dao.updateTransactionCategory(transactionId, categoryId)
     }
 
-    suspend fun updateTransactionsCategory(oldCategoryId: Int?, newCategoryId: Int?) {
-        dao.updateTransactionsCategory(oldCategoryId, newCategoryId)
+    suspend fun updateTransactionsCategoryByPayee(payee: String, newCategoryId: Int?) {
+        dao.updateTransactionsCategoryByPayee(payee, newCategoryId)
     }
 
     suspend fun deleteTransaction(id: Int) {

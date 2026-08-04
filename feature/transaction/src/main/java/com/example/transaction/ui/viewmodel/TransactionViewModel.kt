@@ -35,12 +35,13 @@ class TransactionViewModel @Inject constructor(
         }
     }
 
-    fun updateTransactionCategory(updatedTransaction: Transaction, updateForAllTransactions: Boolean) {
+    fun updateTransactionCategory(categoryId: Int?, updateForAllTransactions: Boolean) {
         viewModelScope.launch {
+            if (transaction.value == null) throw IllegalStateException("Transaction is null")
             if (updateForAllTransactions) {
-                repo.updateTransactionsCategory(updatedTransaction.categoryId, updatedTransaction.categoryId)
+                repo.updateTransactionsCategoryByPayee(transaction.value!!.payee, categoryId)
             } else {
-                repo.updateTransaction(updatedTransaction)
+                repo.updateTransactionCategory(transaction.value!!.id, categoryId)
             }
         }
 

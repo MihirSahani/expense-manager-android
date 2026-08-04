@@ -1,6 +1,7 @@
 package com.example.transaction.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +25,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import com.example.common.ui.component.IconAndRow
 import com.example.common.ui.component.LazyListOfItems
+import com.example.common.ui.component.ListOfItems
+import com.example.common.ui.component.SingleRowItem
 import com.example.common.utils.MyText
 import com.example.core.database.entity.Category
 import com.example.core.database.entity.Transaction
@@ -34,7 +38,7 @@ fun CategoryUpdateDialog(
     showCategoryDialog: Boolean,
     transaction: Transaction?,
     categories: List<Category>,
-    onUpdateCategory: (Transaction, Boolean) -> Unit,
+    onUpdateCategory: (Int?, Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     var updateCategoryForAllTransactionsWithPayee by remember { mutableStateOf(false) }
@@ -49,21 +53,10 @@ fun CategoryUpdateDialog(
                 Column(
                     Modifier
                         .fillMaxWidth(),
-                    verticalArrangement = Arrangement.Bottom
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.surface)
-                            .padding(horizontal = 16.dp)
-                        ,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        MyText.RowBody(
-                            "Update all for this payee",
-                            modifier = Modifier.weight(1f),
-                        )
+                    SingleRowItem {
+                        MyText.RowBody("Update all for this payee",)
                         Switch(
                             modifier = Modifier.padding(start = 8.dp),
                             colors = SwitchDefaults.colors(
@@ -77,23 +70,21 @@ fun CategoryUpdateDialog(
                         )
                     }
 
-                    Spacer(Modifier.padding(8.dp))
-
                     LazyListOfItems(categories) { category ->
-                        TextButton(
-                            onClick = {
-                                val updatedTransaction = transaction.copy(
-                                    categoryId = category.id
-                                )
-                                onUpdateCategory(
-                                    updatedTransaction,
-                                    updateCategoryForAllTransactionsWithPayee
-                                )
-                                onDismiss()
-                            },
-                            // modifier = Modifier.fillMaxWidth().padding( horizontal = 8.dp)
-                        ) {
-                            MyText.RowHeader(category.name, modifier = Modifier.fillMaxWidth())
+                        IconAndRow(category.icon.imageVector, category.color) {
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onUpdateCategory(
+                                            category.id,
+                                            updateCategoryForAllTransactionsWithPayee
+                                        )
+                                        onDismiss()
+                                    }
+                            ) {
+                                MyText.RowHeader(category.name, modifier = Modifier.fillMaxWidth())
+                            }
                         }
                     }
                 }

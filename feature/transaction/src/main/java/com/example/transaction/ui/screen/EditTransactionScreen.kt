@@ -34,8 +34,8 @@ fun TransactionScreen(viewModel: TransactionViewModel = hiltViewModel()) {
             onAccountUpdate = { updatedTransaction ->
                 viewModel.updateTransactionAccount(updatedTransaction)
             },
-            onCategoryUpdate = { updatedTransaction, updateForAllTransactions ->
-                viewModel.updateTransactionCategory(updatedTransaction, updateForAllTransactions)
+            onCategoryUpdate = { categoryId, updateForAllTransactions ->
+                viewModel.updateTransactionCategory(categoryId, updateForAllTransactions)
             },
             padding = padding
         )
