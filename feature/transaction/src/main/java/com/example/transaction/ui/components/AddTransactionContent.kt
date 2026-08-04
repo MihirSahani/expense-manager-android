@@ -68,7 +68,7 @@ fun AddTransactionContent(
     var showCategoryDialog by remember { mutableStateOf(false) }
 
     var selectedAccount by remember { mutableStateOf<Account?>(null) }
-    var showAccountDialog by remember { mutableStateOf(false) }
+    var showAccountDialog by remember { mutableStateOf(true) }
 
     var transactionDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var showDatePickerDialog by remember { mutableStateOf(false) }
@@ -201,7 +201,7 @@ fun AddTransactionContent(
         if (showCategoryDialog) {
             SimpleDialog(
                 title = "Select Category",
-                items = categories.map { it.name },
+                items = categories.map { Triple(it.icon.imageVector, it.name, it.color) },
                 onItemSelected = { index ->
                     selectedCategory = categories[index]
                     showCategoryDialog = false
@@ -213,7 +213,7 @@ fun AddTransactionContent(
         if (showAccountDialog) {
             SimpleDialog(
                 title = "Select Account",
-                items = accounts.map { it.name },
+                items = accounts.map { Triple(it.icon.imageVector, it.name, it.color) },
                 onItemSelected = { index ->
                     selectedAccount = accounts[index]
                     showAccountDialog = false

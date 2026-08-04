@@ -5,50 +5,32 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import com.example.common.ui.component.IconAndRow
 import com.example.common.ui.theme.FinancesTheme
 import com.example.common.ui.theme.SamsungTextGrayDark
 import com.example.common.ui.theme.SamsungTextGrayLight
 import com.example.common.utils.MyText
 import com.example.common.utils.toTimeString
-import com.example.core.database.entity.Category
 import com.example.core.database.models.CategoryIcon
 import com.example.core.database.models.TransactionType
 import com.example.core.database.projection.TransactionWithCategory
-import com.example.transaction.ui.viewmodel.TransactionListItem
 
 @Composable
 fun TransactionItem(
     item: TransactionWithCategory,
     onClick: (Int) -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick(item.id) }
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        CategoryIconRenderer(
-            name = item.categoryName,
-            icon = item.categoryIcon,
-            color = item.categoryColor
-        )
-
-        Spacer(modifier = Modifier.width(16.dp))
-        
+    IconAndRow(icon = item.categoryIcon?.imageVector, bgColor = item.categoryColor) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onClick(item.id) }
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

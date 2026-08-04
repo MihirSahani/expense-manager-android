@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.common.model.DefaultColors
+import com.example.common.ui.component.IconAndRow
 import com.example.common.utils.MyText
 import com.example.core.database.entity.Category
 
@@ -25,44 +26,22 @@ fun CategoryItem(
     category: Category,
     onClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(
+    IconAndRow(category.icon.imageVector, category.color) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxWidth()
+                .clickable { onClick() }
         ) {
-            Box(
-                Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(Color(category.color ?: DefaultColors.GRAY.hexValue))
-                    .padding(8.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    imageVector = category.icon.imageVector,
-                    contentDescription = category.name,
-                )
-            }
-
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    MyText.RowHeader(category.name)
-                    if (category.budgetPerCycle != null) {
-                        MyText.TransactionAmount(category.budgetPerCycle!!)
-                    }
+                MyText.RowHeader(category.name)
+                if (category.budgetPerCycle != null) {
+                    MyText.TransactionAmount(category.budgetPerCycle!!)
                 }
-                MyText.RowBody(category.type.name)
             }
+            MyText.RowBody(category.type.name)
         }
-
     }
 }
