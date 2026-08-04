@@ -43,7 +43,6 @@ fun AddEditAccountScreen(vm: AccountViewModel = hiltViewModel()) {
                     vm.updateAccount(account)
                 }
             },
-
         )
     }
 }

@@ -18,7 +18,7 @@ fun AccountItem(account: Account, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(vertical = 8.dp),
+            .padding(16.dp, 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column {

@@ -11,8 +11,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.common.model.DefaultColors
 import com.example.common.ui.theme.FinancesTheme
 import com.example.common.utils.MyText
 import com.example.common.utils.MyText.Companion.toIndianFormat
@@ -22,7 +24,7 @@ fun NetBalanceDisplay(netBalance: Long) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            // .padding(horizontal = 16.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface)
             .padding(16.dp)
@@ -31,8 +33,11 @@ fun NetBalanceDisplay(netBalance: Long) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            MyText.SecondaryHeader("Net Balance:")
-            MyText.SecondaryHeader((netBalance / 100.0).toIndianFormat())
+            MyText.SecondaryHeader("Net Balance")
+            MyText.SecondaryHeader(
+                (netBalance / 100.0).toIndianFormat(),
+                if (netBalance >= 0) Color(DefaultColors.GREEN.hexValue) else Color(DefaultColors.RED.hexValue)
+            )
         }
     }
 }

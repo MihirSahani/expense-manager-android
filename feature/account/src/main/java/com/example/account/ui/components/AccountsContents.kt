@@ -1,5 +1,6 @@
 package com.example.account.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -28,10 +29,10 @@ fun AccountsContent(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = padding.calculateTopPadding())
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         NetBalanceDisplay(netBalance)
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         LazyListOfItems(accounts) { account ->
             AccountItem(

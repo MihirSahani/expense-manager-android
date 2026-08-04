@@ -24,7 +24,6 @@ fun AddEditTransactionScreen(onDismiss: () -> Unit) {
     val accounts by vm.accounts.collectAsStateWithLifecycle()
 
     ScreenScaffold("Add Transaction") { padding ->
-
         AddTransactionContent(
             categories = categories,
             accounts = accounts,
