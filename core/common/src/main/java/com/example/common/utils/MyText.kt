@@ -12,11 +12,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.common.model.DefaultColors
 import com.example.core.database.models.TransactionType
 import com.example.common.ui.theme.SamsungTextGrayDark
 import com.example.common.ui.theme.SamsungTextGrayLight
 import java.text.NumberFormat
 import java.util.Locale
+import kotlin.math.abs
 
 class MyText {
     companion object {
@@ -32,12 +34,12 @@ class MyText {
         }
 
         @Composable
-        fun SecondaryHeader(title: String) {
+        fun SecondaryHeader(title: String, color: Color? = null) {
             Text(
                 text = title,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                color = color ?: MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
             )
         }
@@ -76,12 +78,14 @@ class MyText {
             color: Color? = null,
         ) {
             Text(
-                text = (amount/100.0).toIndianFormat(),
+                text = abs(amount/100.0).toIndianFormat(),
                 fontSize = fontSize,
                 fontWeight = FontWeight.Bold,
-                color = color
-                    ?: if (type == TransactionType.DEBIT || amount < 0) Color(0xFF9B2600)
-                    else Color(0xFF02AF34),
+                color = color ?:
+                if (type == TransactionType.DEBIT || amount < 0)
+                    Color(DefaultColors.RED.hexValue)
+                else
+                    Color(DefaultColors.GREEN.hexValue),
                 modifier = modifier
             )
         }
@@ -94,12 +98,14 @@ class MyText {
             color: Color? = null,
         ) {
             Text(
-                text = (amount/100.0).toIndianFormat(),
+                text = abs(amount/100.0).toIndianFormat(),
                 fontSize = fontSize,
                 fontWeight = FontWeight.Bold,
-                color = color
-                    ?: if (amount < 0) Color(0xFF9B2600)
-                    else Color(0xFF02AF34),
+                color = color ?:
+                if (amount < 0)
+                    Color(DefaultColors.RED.hexValue)
+                else
+                    Color(DefaultColors.GREEN.hexValue),
                 modifier = modifier
             )
         }

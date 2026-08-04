@@ -1,8 +1,8 @@
 package com.example.common.model
 
 enum class DefaultColors(val hexValue: Int) {
-    RED(0xFFFF0000.toInt()),
-    GREEN(0xFF00FF00.toInt()),
+    RED(0xFF9B2600.toInt()),
+    GREEN(0xFF02AF34.toInt()),
     BLUE(0xFF0000FF.toInt()),
     YELLOW(0xFFFFFF00.toInt()),
     CYAN(0xFF00FFFF.toInt()),
