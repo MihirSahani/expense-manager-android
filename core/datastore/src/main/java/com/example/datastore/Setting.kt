@@ -40,8 +40,11 @@ class Setting (val context: Context) {
         setSetting(SettingKey.USER_FIST_NAME, firstName)
     }
 
-    suspend fun setUserLastName(lastName: String) {
-        setSetting(SettingKey.USER_LAST_NAME, lastName)
+    suspend fun setUserLastName(lastName: String?) {
+        when (lastName) {
+            null -> removeSetting(SettingKey.USER_LAST_NAME)
+            else -> setSetting(SettingKey.USER_LAST_NAME, lastName)
+        }
     }
 
     suspend fun setCycleType(cycleType: CycleType) {
@@ -72,6 +75,12 @@ class Setting (val context: Context) {
     private suspend fun <T> setSetting(key: Preferences.Key<T>, value: T) {
         context.settingDataStore.edit { preferences ->
             preferences[key] = value
+        }
+    }
+
+    private suspend fun <T> removeSetting(key: Preferences.Key<T>) {
+        context.settingDataStore.edit { preferences ->
+            preferences.remove(key)
         }
     }
 }
