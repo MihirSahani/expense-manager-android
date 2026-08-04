@@ -14,12 +14,13 @@ fun CategoriesScreen(
     onCategoryClick: (Category) -> Unit,
 ) {
     val viewmodel: CategoriesViewModel = hiltViewModel()
-    val categories by viewmodel.categories.collectAsStateWithLifecycle(emptyList())
+    val categoriesWithRemainingBalance by viewmodel.categoriesWithRemainingBalance.collectAsStateWithLifecycle(emptyList())
+
     ScreenScaffold(
         title = "Categories",
     ) { padding ->
         CategoriesContent(
-            categories = categories,
+            categoriesWithRemainingBalance = categoriesWithRemainingBalance,
             onCategoryClick = { category -> onCategoryClick(category) },
             padding = padding
         )

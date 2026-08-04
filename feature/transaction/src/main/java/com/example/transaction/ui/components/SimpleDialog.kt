@@ -1,6 +1,5 @@
-package com.example.transaction.ui.components
+package com.example.common.ui.component
 
-import android.graphics.drawable.Icon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,7 +19,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.example.common.model.DefaultColors
-import com.example.common.ui.component.LazyListOfItems
 import com.example.common.utils.MyInput
 import com.example.common.utils.MyText
 
@@ -29,8 +26,8 @@ import com.example.common.utils.MyText
 @Composable
 fun SimpleDialog(
     title: String,
-    items: List<Triple<ImageVector, String, Int?>>,
-    onItemSelected: (Int) -> Unit,
+    items: List<Triple<ImageVector?, String, Int?>>,
+    onItemSelected: (Any) -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -47,18 +44,20 @@ fun SimpleDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Box(
-                        Modifier
-                            .clip(RoundedCornerShape(50))
-                            .background(
-                                Color(item.third ?: DefaultColors.GRAY.hexValue)
+                    item.first?.let {
+                        Box(
+                            Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(
+                                    Color(item.third ?: DefaultColors.GRAY.hexValue)
+                                )
+                                .padding(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = it,
+                                contentDescription = it.name,
                             )
-                            .padding(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = item.first,
-                            contentDescription = item.first.name,
-                        )
+                        }
                     }
 
                     MyText.RowHeader(

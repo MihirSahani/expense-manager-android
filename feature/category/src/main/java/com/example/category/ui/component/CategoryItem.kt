@@ -20,28 +20,40 @@ import com.example.common.model.DefaultColors
 import com.example.common.ui.component.IconAndRow
 import com.example.common.utils.MyText
 import com.example.core.database.entity.Category
+import com.example.core.database.projection.CategoryWithRemainingBalance
 
 @Composable
 fun CategoryItem(
-    category: Category,
+    categoryWithRemainingBalance: CategoryWithRemainingBalance,
     onClick: () -> Unit
 ) {
-    IconAndRow(category.icon.imageVector, category.color) {
+    IconAndRow(categoryWithRemainingBalance.category.icon.imageVector, categoryWithRemainingBalance.category.color) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onClick() }
+                .clickable { onClick() },
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.Start
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                MyText.RowHeader(category.name)
-                if (category.budgetPerCycle != null) {
-                    MyText.TransactionAmount(category.budgetPerCycle!!)
+                MyText.RowHeader(categoryWithRemainingBalance.category.name)
+                MyText.RowBody(categoryWithRemainingBalance.category.type.name)
+            }
+
+            if (categoryWithRemainingBalance.category.budgetPerCycle != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MyText.RowBody("Budget this cycle")
+                    MyText.TransactionAmount(categoryWithRemainingBalance.remainingBalance!!)
                 }
             }
-            MyText.RowBody(category.type.name)
         }
     }
 }
