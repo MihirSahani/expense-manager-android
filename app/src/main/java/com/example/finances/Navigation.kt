@@ -8,6 +8,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.account.ui.screen.AccountsScreen
 import com.example.account.ui.screen.AddEditAccountScreen
+import com.example.category.ui.screen.CategoriesScreen
+import com.example.category.ui.screen.EditCategoryScreen
 import com.example.setting.ui.screen.SettingsScreen
 import com.example.setting.ui.screen.UserProfileScreen
 import com.example.setting.ui.viewmodel.SettingViewModel
@@ -47,8 +49,28 @@ fun App() {
         ) {
             AddEditAccountScreen { navController.popBackStack() }
         }
+
+        composable(Screen.Categories.route) {
+            CategoriesScreen(
+                { id ->
+                    navController.navigate(Screen.Category(id))
+                }
+            )
+        }
+
+        composable(
+            Screen.Category.ROUTE,
+            listOf(navArgument("id") {
+                type = androidx.navigation.NavType.IntType
+                nullable = true
+            })
+        ) {
+            EditCategoryScreen()
+        }
+
         composable(Screen.Analytics.route) {
         }
+
         composable(Screen.Transactions.route) {
             TransactionHistoryScreen { id ->
                 navController.navigate(Screen.Transaction(id))

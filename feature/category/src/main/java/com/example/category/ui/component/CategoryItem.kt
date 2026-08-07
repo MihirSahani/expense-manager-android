@@ -50,7 +50,7 @@ fun CategoryItem(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    MyText.RowBody("Budget this cycle")
+                    MyText.RowBody("Remaining Balance")
                     MyText.TransactionAmount(categoryWithRemainingBalance.remainingBalance!!)
                 }
             }

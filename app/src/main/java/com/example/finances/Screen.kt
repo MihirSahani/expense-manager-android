@@ -12,6 +12,13 @@ sealed class Screen(val route: String) {
         }
     }
 
+    object Categories: Screen("categories")
+    data class Category(val id: Int?): Screen("category/$id") {
+        companion object {
+            const val ROUTE = "category/{id}"
+        }
+    }
+
     object Analytics: Screen("analytics")
 
     object Transactions: Screen("transactions")
