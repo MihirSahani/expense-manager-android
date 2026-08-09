@@ -20,3 +20,5 @@
 .cxx
 local.properties
 /.kotlin/
+
+out.csv
