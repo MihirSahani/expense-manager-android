@@ -33,21 +33,21 @@ data class Transaction(
     @ColumnInfo("id")
     val id: Int = 0,
     @ColumnInfo("amount")
-    val amount: Long,
+    var amount: Long,
     @ColumnInfo("category_id")
     val categoryId: Int?,
     @ColumnInfo("datetime")
     val datetime: Long,
     @ColumnInfo("raw_account_no")
-    val rawAccountNo: String?,
+    var rawAccountNo: String?,
     @ColumnInfo("account_id")
-    val accountId: Int?,
+    var accountId: Int?,
     @ColumnInfo("payee")
-    val payee: String,
+    var payee: String,
     @ColumnInfo("transaction_type")
-    val transactionType: TransactionType,
+    var transactionType: TransactionType?,
     @ColumnInfo("reference_id")
-    val referenceId: Int?,
+    var referenceId: String?,
     @ColumnInfo("description")
     val description: String?
 )
