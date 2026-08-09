@@ -1,0 +1,11 @@
+sender,body,timestamp,is_transaction,exp_type,exp_amount_paise,exp_payee,exp_account
+VK-HDFCBK,"Rs.1,250.50 debited from a/c XX1234 to AMAZON on 09-08-24. UPI Ref 401234567890. Avl Bal Rs.5,000.00",1723190400000,true,DEBIT,125050,AMAZON,1234
+JM-SBIINB,"Dear Customer, Rs.500 withdrawn at SBI ATM from a/c XX9087 on 09-08-24 tx# 552341. Avl Bal Rs.2,300.00",1723194000000,true,DEBIT,50000,SBI ATM,9087
+AD-ICICIB,"INR 2,000.00 credited to a/c XX2211 on 09-Aug-24. Info: NEFT-ACME PAYROLL. Avbl Bal INR 8,450.00",1723197600000,true,CREDIT,200000,ACME PAYROLL,2211
+VM-AXISBK,"Rs 750 spent on Card ending 4477 at SWIGGY on 09-08-24. Avl Lmt: Rs 44,250. Not you? Call 18004195959",1723201200000,true,DEBIT,75000,SWIGGY,4477
+BP-KOTAKB,"Rs.1000 credited to your a/c XX3321 on 09-08-24. Ref no 220987654321. Avl Bal Rs.19,900.00",1723204800000,true,CREDIT,100000,Unknown,3321
+VK-HDFCBK,"Rs.99.00 debited from a/c XX1234 for UPI-zomato@ybl on 09-08-24 Ref 402233445566. Avl Bal Rs.4,901.00",1723208400000,true,DEBIT,9900,zomato@ybl,1234
+JM-SBIUPI,"Rs.15,000.00 credited to a/c XX9087 by UPI frm john@okhdfcbank Ref no 219988776655 on 09-08-24",1723212000000,true,CREDIT,1500000,john@okhdfcbank,
+VK-HDFCBK,"Your OTP for txn is 823140. Do not share it with anyone. Valid for 5 min.",1723215600000,false,,,,
+AD-ICICIB,"Get a pre-approved personal loan up to Rs.5,00,000 at low EMI. Click https://icici.in/xyz to apply now.",1723219200000,false,,,,
+AX-AMAZON,"Your Amazon order of Rs.1,499 has been shipped and will be delivered by 11-08-24.",1723222800000,false,,,,

@@ -1,4 +1,7 @@
 package com.example.sms
 
-class SmsData {
-}
+data class SmsData(
+    val body: String,
+    val sender: String,
+    val timestamp: Long
+)
