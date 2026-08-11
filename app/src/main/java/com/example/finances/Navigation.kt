@@ -10,6 +10,8 @@ import com.example.account.ui.screen.AccountsScreen
 import com.example.account.ui.screen.AddEditAccountScreen
 import com.example.category.ui.screen.CategoriesScreen
 import com.example.category.ui.screen.EditCategoryScreen
+import com.example.login.ui.screen.LoginScreen
+import com.example.permission.ui.screen.PermissionScreen
 import com.example.setting.ui.screen.SettingsScreen
 import com.example.setting.ui.screen.UserProfileScreen
 import com.example.setting.ui.viewmodel.SettingViewModel
@@ -25,8 +27,13 @@ fun App() {
         startDestination = Screen.Login.route
     ) {
         composable(Screen.Login.route) {
+            LoginScreen(
+                { navController.navigate(Screen.Home.route) },
+                { navController.navigate(Screen.Permissions.route) }
+            )
         }
         composable(Screen.Permissions.route) {
+            PermissionScreen( { navController.navigate(Screen.Home.route) } )
         }
         composable(Screen.Home.route) {
         }
@@ -47,7 +54,7 @@ fun App() {
                 nullable = true
             })
         ) {
-            AddEditAccountScreen { navController.popBackStack() }
+            AddEditAccountScreen ( { navController.popBackStack() } )
         }
 
         composable(Screen.Categories.route) {

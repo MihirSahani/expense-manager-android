@@ -45,6 +45,8 @@ dependencies {
     implementation(project(":feature:account"))
     implementation(project(":feature:category"))
     implementation(project(":feature:setting"))
+    implementation(project(":feature:permission"))
+    implementation(project(":feature:login"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
