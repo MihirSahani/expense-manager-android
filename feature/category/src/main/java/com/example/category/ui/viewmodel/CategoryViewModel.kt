@@ -1,5 +1,6 @@
 package com.example.category.ui.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import androidx.lifecycle.ViewModel
@@ -12,7 +13,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class CategoryViewModel @Inject constructor(
     private val repo: CategoryRepository,
-    private val savedStateHandle: androidx.lifecycle.SavedStateHandle
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val categoryId: Int = checkNotNull(savedStateHandle["id"])
 

@@ -6,7 +6,6 @@ import com.example.datastore.Setting
 import com.example.datastore.model.Currency
 import com.example.datastore.model.CycleType
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
