@@ -23,7 +23,7 @@ fun AppBar(title: String, icon: @Composable () -> Unit = {}) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .padding(top = 8.dp),
+            .padding(top = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
