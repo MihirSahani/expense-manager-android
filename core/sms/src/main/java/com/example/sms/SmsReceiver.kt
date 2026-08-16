@@ -8,7 +8,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
 
-class SMSReceiver : BroadcastReceiver() {
+class SmsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: android.content.Intent?) {
         if (intent?.action == android.provider.Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
             val request = OneTimeWorkRequestBuilder<ParseSmsWorker>()

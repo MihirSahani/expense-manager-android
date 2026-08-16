@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.provider.Telephony
+import android.telephony.SmsMessage
 import androidx.core.content.ContextCompat
 import com.example.common.repository.TransactionRepository
 import com.example.core.database.entity.Transaction
@@ -23,6 +24,7 @@ import java.util.Locale
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import javax.inject.Inject
+import kotlin.math.roundToLong
 
 class SmsParser @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -62,7 +64,7 @@ class SmsParser @Inject constructor(
         repo.create(transactions)
     }
 
-    private fun getCursor(startSeconds: Long = 0L): Cursor? {
+    fun getCursor(startSeconds: Long = 0L): Cursor? {
         val startMillis = startSeconds * 1000
         val selection = "${Telephony.Sms.Inbox.DATE} >= ?"
         val selectionArgs = arrayOf(startMillis.toString())
@@ -92,6 +94,17 @@ class SmsParser @Inject constructor(
         return rows
     }
 
+    suspend fun saveTransactionsFromMessages(messages: Array<out SmsMessage>) = withContext(Dispatchers.IO) {
+        val transactions = coroutineScope {
+            messages.map { message ->
+                async {
+                    parseSmsData(message.messageBody, message.originatingAddress ?: "", message.timestampMillis)
+                }
+            }.awaitAll().filterNotNull()
+        }
+        saveToDatabase(transactions)
+    }
+
     fun parseSmsData(body: String, sender: String, timestamp: Long): Transaction? {
         val regEx = Pattern.compile("(?i)(?:RS|INR|MRP)?(?:(?:RS|INR|MRP)\\.?\\s?)(\\d+(:?\\,\\d+)?(\\,\\d+)?(\\.\\d{1,2})?)+")
         // Find instance of pattern matches
@@ -102,7 +115,7 @@ class SmsParser @Inject constructor(
             rawAccountNo = null,
             accountId = null,
             payee = "",
-            transactionType = null,
+            transactionType = TransactionType.CREDIT,
             referenceId = null,
             description = body
         )
@@ -112,7 +125,10 @@ class SmsParser @Inject constructor(
                 if (checkSenderIsValid(sender)) {
                     if (!body.contains("stmt", true)) {
                         // found out debit and credit
-                        getAmountAndType(body, transaction, m)
+                        val (transactionType, amount) = getAmountAndType(body, transaction, m)
+                        if (transactionType == null) return null
+                        transaction.transactionType = transactionType
+                        transaction.amount = amount
                         // transaction.parsed = "1"
                         transaction.rawAccountNo = getRawAccountNumber(body)
                         // check message is otp or not
@@ -132,7 +148,7 @@ class SmsParser @Inject constructor(
                             && !body.contains("SmartPay", true)
                             && !body.contains("We are pleased to inform that", true)
                             && !body.contains("has been opened", true)
-                            && transaction.transactionType != null
+                            // && transaction.transactionType != null
                         ) {
                             // bank wise filter
                             // getAvailableBalance(transaction)
@@ -271,7 +287,7 @@ class SmsParser @Inject constructor(
             Pattern.compile("(?i)(?:RS|INR|MRP)?(?:(?:RS|INR|MRP)\\.?\\s?)(\\d+(:?\\,\\d+)?(\\,\\d+)?(\\.\\d{1,2})?)+")
         // Find instance of pattern matches
         if (body.contains("curr o/s - ", true)) {
-            var newBody = body.split("o/s - ")
+            val newBody = body.split("o/s - ")
             val m = regEx.matcher(newBody[1].trim())
             if (m.find()) {
                 var amount = m.group(0).replace("inr".toRegex(), "")
@@ -282,7 +298,7 @@ class SmsParser @Inject constructor(
                 // transaction.avlBal = amount
             }
         } else if (body.contains("The Balance is", true)) {
-            var newBody = body.split("The Balance is ")
+            val newBody = body.split("The Balance is ")
             val m = regEx.matcher(newBody[1].trim())
             if (m.find()) {
                 var amount = m.group(0).replace("inr".toRegex(), "")
@@ -293,7 +309,7 @@ class SmsParser @Inject constructor(
                 // transaction.avlBal = amount
             }
         } else if (body.contains("The Available Balance is", true)) {
-            var newBody = body.split("The Available Balance is ")
+            val newBody = body.split("The Available Balance is ")
             val m = regEx.matcher(newBody[1].trim())
             if (m.find()) {
                 var amount = m.group(0).replace("inr".toRegex(), "")
@@ -304,7 +320,7 @@ class SmsParser @Inject constructor(
                 // transaction.avlBal = amount
             }
         } else if (body.contains("Avbl Lmt:", true)) {
-            var newBody = body.split("Avbl Lmt:")
+            val newBody = body.split("Avbl Lmt:")
             val m = regEx.matcher(newBody[1].trim())
             if (m.find()) {
                 var amount = m.group(0).replace("inr".toRegex(), "")
@@ -315,7 +331,7 @@ class SmsParser @Inject constructor(
                 // transaction.avlBal = amount
             }
         } else if (body.contains("Avlbal", true)) {
-            var newBody = body.split("Avlbal")
+            val newBody = body.split("Avlbal")
             val m = regEx.matcher(newBody[1].trim())
             if (m.find()) {
                 var amount = m.group(0).replace("inr".toRegex(), "")
@@ -326,7 +342,7 @@ class SmsParser @Inject constructor(
                 // transaction.avlBal = amount
             }
         } else if (body.contains("balance is", true)) {
-            var newBody = body.lowercase(Locale.getDefault()).split("balance is ")
+            val newBody = body.lowercase(Locale.getDefault()).split("balance is ")
             val m = regEx.matcher(newBody[1].trim())
             if (m.find()) {
                 var amount = m.group(0).replace("inr".toRegex(), "")
@@ -337,7 +353,7 @@ class SmsParser @Inject constructor(
                 // transaction.avlBal = amount
             }
         } else if (body.contains("AvBl Bal:", true)) {
-            var newBody = body.lowercase(Locale.getDefault()).split("avbl bal: ")
+            val newBody = body.lowercase(Locale.getDefault()).split("avbl bal: ")
             val m = regEx.matcher(newBody[1].trim())
             if (m.find()) {
                 var amount = m.group(0).replace("inr".toRegex(), "")
@@ -348,7 +364,7 @@ class SmsParser @Inject constructor(
                 // transaction.avlBal = amount
             }
         } else if (body.contains("Avl. Bal:", true)) {
-            var newBody = body.lowercase(Locale.getDefault()).split("avl. bal:")
+            val newBody = body.lowercase(Locale.getDefault()).split("avl. bal:")
             val m = regEx.matcher(newBody[1].trim())
             if (m.find()) {
                 var amount = m.group(0).replace("inr".toRegex(), "")
@@ -360,7 +376,7 @@ class SmsParser @Inject constructor(
             }
         } else if (body.contains("AVl BAL", true)) {
             if (body.contains("Avl. Bal:", true)) {
-                var newBody = body.lowercase(Locale.getDefault()).split("avl. bal:")
+                val newBody = body.lowercase(Locale.getDefault()).split("avl. bal:")
                 val m = regEx.matcher(newBody[1].trim())
                 if (m.find()) {
                     var amount = m.group(0).replace("inr".toRegex(), "")
@@ -371,7 +387,7 @@ class SmsParser @Inject constructor(
                     // transaction.avlBal = amount
                 }
             } else {
-                var newBody = body.lowercase(Locale.getDefault()).split("avl bal ")
+                val newBody = body.lowercase(Locale.getDefault()).split("avl bal ")
                 val m = regEx.matcher(newBody[1].trim())
                 if (m.find()) {
                     var amount = m.group(0).replace("inr".toRegex(), "")
@@ -383,7 +399,7 @@ class SmsParser @Inject constructor(
                 }
             }
         } else if (body.contains("Avail Bal", true)) {
-            var newBody = body.lowercase(Locale.getDefault()).split("avail bal ")
+            val newBody = body.lowercase(Locale.getDefault()).split("avail bal ")
             val m = regEx.matcher(newBody[1].trim().replace("\\s".toRegex(), ""))
             if (m.find()) {
                 var amount = m.group(0).replace("inr".toRegex(), "")
@@ -394,7 +410,7 @@ class SmsParser @Inject constructor(
                 // transaction.avlBal = amount
             }
         } else if (body.contains("The combine BAL is", true)) {
-            var newBody = body.lowercase(Locale.getDefault()).split("bal is ")
+            val newBody = body.lowercase(Locale.getDefault()).split("bal is ")
             val m = regEx.matcher(newBody[1].trim())
             if (m.find()) {
                 var amount = m.group(0).replace("inr".toRegex(), "")
@@ -405,7 +421,7 @@ class SmsParser @Inject constructor(
                 // transaction.avlBal = amount
             }
         } else if (body.contains("The balance in", true)) {
-            var newBody = body.lowercase(Locale.getDefault()).split("balance in ")
+            val newBody = body.lowercase(Locale.getDefault()).split("balance in ")
             val m = regEx.matcher(newBody[1].trim())
             if (m.find()) {
                 var amount = m.group(0).replace("inr".toRegex(), "")
@@ -418,7 +434,7 @@ class SmsParser @Inject constructor(
                 // transaction.transactionType = "balance"
             }
         } else if (body.contains("Available balance:", true)) {
-            var newBody = body.lowercase(Locale.getDefault()).split("available balance:")
+            val newBody = body.lowercase(Locale.getDefault()).split("available balance:")
             val m = regEx.matcher(newBody[1].trim())
             if (m.find()) {
                 var amount = m.group(0).replace("inr".toRegex(), "")
@@ -794,8 +810,7 @@ class SmsParser @Inject constructor(
         } else if (body.contains("Ref no", true)) {
             if (body.contains("VPA", true)) {
                 val dataList = body.lowercase(Locale.getDefault()).split("vpa ")
-                var data = ""
-                data = if (dataList.size > 1) {
+                val data = if (dataList.size > 1) {
                     dataList[1]
                 } else {
                     dataList[0]
@@ -823,8 +838,7 @@ class SmsParser @Inject constructor(
                 }
             } else {
                 val dataList = body.lowercase(Locale.getDefault()).split("ref no")
-                var data = ""
-                data = if (dataList.size > 1) {
+                val data = if (dataList.size > 1) {
                     dataList[1]
                 } else {
                     dataList[0]
@@ -856,11 +870,10 @@ class SmsParser @Inject constructor(
         } else if (body.contains("Ref#", true)) {
             val dataList = body.split("Ref#")
             //val p1 = Pattern.compile("([0-9]+).*")
-            var data = ""
-            if (dataList.size == 2) {
-                data = dataList[1]
+            val data = if (dataList.size == 2) {
+                dataList[1]
             } else {
-                data = dataList[0]
+                dataList[0]
             }
             when {
 
@@ -907,10 +920,9 @@ class SmsParser @Inject constructor(
             }
         } else if (body.contains("Received", true)) {
             if (body.contains("via", true)) {
-                var dataList = body.split("via")
+                val dataList = body.split("via")
                 //val p1 = Pattern.compile("([0-9]+).*")
-                var data = ""
-                data = if (dataList.size > 1) {
+                val data = if (dataList.size > 1) {
                     dataList[1]
                 } else {
                     dataList[0]
@@ -936,8 +948,7 @@ class SmsParser @Inject constructor(
             } else if (body.contains("has been", true)) {
                 val dataList = body.split("has ")
                 //val p1 = Pattern.compile("([0-9]+).*")
-                var data = ""
-                data = if (dataList.size > 1) {
+                val data = if (dataList.size > 1) {
                     dataList[2]
                 } else {
                     dataList[0]
@@ -965,15 +976,14 @@ class SmsParser @Inject constructor(
             if (body.contains("txn#", true)) {
                 val dataList = body.split("ATM")
                 //val p1 = Pattern.compile("([0-9]+).*")
-                var data = ""
-                if (dataList.size > 1) {
+                val data = if (dataList.size > 1) {
                     if (dataList.size > 2) {
-                        data = dataList[2]
+                        dataList[2]
                     } else {
-                        data = dataList[1]
+                        dataList[1]
                     }
                 } else {
-                    data = dataList[0]
+                    dataList[0]
                 }
                 when {
                     data.replaceFirstChar { it.lowercase() }.contains("fm", true) -> {
@@ -999,8 +1009,7 @@ class SmsParser @Inject constructor(
             } else if (body.contains("tx", true)) {
                 val dataList = body.split("tx#")
                 //val p1 = Pattern.compile("([0-9]+).*")
-                var data = ""
-                data = if (dataList.size > 1) {
+                val data = if (dataList.size > 1) {
                     dataList[1]
                 } else {
                     dataList[0]
@@ -1611,7 +1620,7 @@ class SmsParser @Inject constructor(
         return "Unknown"   // fallback
     }
 
-    private fun getAmountAndType(body: String, transaction: Transaction, m: Matcher) {
+    private fun getAmountAndType(body: String, transaction: Transaction, m: Matcher): Pair<TransactionType?, Long> {
         if (body.contains("withdrawn", true)
             || body.contains("debited", true)
             || body.contains("spent", true)
@@ -1629,8 +1638,8 @@ class SmsParser @Inject constructor(
             && !body.contains("has been opened", true)
         ) {
             val amount = m.group(1).replace(",".toRegex(), "")
-            transaction.amount = amount.toDoubleOrNull()?.times(100)?.let { Math.round(it) } ?: 0L
-            transaction.transactionType = TransactionType.DEBIT
+            val formattedAmount = amount.toDoubleOrNull()?.times(100)?.roundToLong() ?: 0L
+            return Pair(TransactionType.DEBIT, formattedAmount)
         } else if (body.contains("credited", true)
             || body.contains("cr", true)
             || body.contains("deposited", true)
@@ -1639,21 +1648,23 @@ class SmsParser @Inject constructor(
             && !body.contains("otp", true)
             && !body.contains("emi", true)
         ) {
-            var amount = m.group(1).replace(",".toRegex(), "")
-            transaction.amount = amount.toDoubleOrNull()?.times(100)?.let { Math.round(it) } ?: 0L
-            when {
+            val amount = m.group(1).replace(",".toRegex(), "")
+            val formattedAmount = amount.toDoubleOrNull()?.times(100)?.roundToLong() ?: 0L
+            return when {
                 body.contains("UPDATE:AVAILABLE Bal in", true) -> {
+                    Pair(null, formattedAmount)
                 }
 
                 body.contains("UPDATE: AVAILABLE Bal in", true) -> {
+                    Pair(null, formattedAmount)
                 }
 
                 else -> {
-                    transaction.transactionType = TransactionType.CREDIT
+                    Pair(TransactionType.CREDIT, formattedAmount)
                 }
             }
-
         }
+        return Pair(null, 0L)
     }
 
     private fun getRawAccountNumber(body: String): String? {

@@ -2,8 +2,11 @@ package com.example.sms
 
 import android.content.ContextWrapper
 import android.content.pm.PackageManager
+import com.example.common.repository.TransactionRepository
 import com.example.core.database.entity.Transaction
 import com.example.core.database.models.TransactionType
+import com.example.datastore.Setting
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -51,7 +54,7 @@ class SmsParserTest {
         }
     }
 
-    private val parser = SmsParser(GrantingContext())
+    private val parser = SmsParser(GrantingContext(), mockk<TransactionRepository>(relaxed = true), mockk<Setting>(relaxed = true))
 
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("samples")
