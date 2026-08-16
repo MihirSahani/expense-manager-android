@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +43,11 @@ fun PermissionScreen(
 ) {
     val mandatory by vm.mandatoryState.collectAsStateWithLifecycle()
     val optional by vm.optionalState.collectAsStateWithLifecycle()
+    val isOnboardingDone by vm.isOnboardingDone.collectAsStateWithLifecycle()
+
+    LaunchedEffect(isOnboardingDone) {
+        if (isOnboardingDone) navigateToNextScreen()
+    }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -57,7 +63,6 @@ fun PermissionScreen(
         optional = optional,
         grantablePermissions = { vm.grantablePermissions() },
         refreshPermissions = { vm.refreshPermissionsStatus() },
-        markOnBoardingComplete = { vm.markOnBoardingComplete() },
         navigateToNextScreen = navigateToNextScreen
     )
 }
@@ -68,7 +73,6 @@ fun PermissionContent(
     optional: List<PermissionViewModel.PermissionUiItem>,
     grantablePermissions: () -> Array<String> = { emptyArray() },
     refreshPermissions: () -> Unit = { },
-    markOnBoardingComplete: () -> Unit = { },
     navigateToNextScreen: () -> Unit = { }
 ) {
     val launcher = rememberLauncherForActivityResult(
@@ -76,7 +80,6 @@ fun PermissionContent(
     ) { results ->
         refreshPermissions()
         if (results.values.all { it }) {
-            markOnBoardingComplete()
             navigateToNextScreen()
         }
     }
@@ -108,7 +111,7 @@ fun PermissionContent(
 
 @Composable
 private fun PermissionRow(item: PermissionViewModel.PermissionUiItem) {
-    var showDescription by remember { mutableStateOf(false) }
+    var showDescription by remember(item.showRational) { mutableStateOf(item.showRational) }
     Column(
         Modifier
             .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -165,13 +168,15 @@ private fun previewMandatory() = listOf(
     ),
     PermissionViewModel.PermissionUiItem(
         PermissionViewModel.PermissionWithInfo("android.permission.RECEIVE_SMS", "Receive SMS messages", "Receive SMS messages to extract transaction data."),
-        isGranted = false
+        isGranted = false,
+        showRational = true
     )
 )
 
 private fun previewOptional() = listOf(
     PermissionViewModel.PermissionUiItem(
         PermissionViewModel.PermissionWithInfo("android.permission.POST_NOTIFICATIONS", "Post Notifications", "Allow the app to send you notifications about your transactions and account activity."),
-        isGranted = false
+        isGranted = false,
+        showRational = true
     )
 )

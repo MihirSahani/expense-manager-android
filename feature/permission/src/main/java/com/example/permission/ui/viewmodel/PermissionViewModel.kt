@@ -13,21 +13,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class PermissionViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val repo: Setting
+    repo: Setting
 ) : ViewModel() {
 
     class PermissionWithInfo(val permission: String, val header: String, val description: String)
 
-    class PermissionUiItem(val info: PermissionWithInfo, val isGranted: Boolean)
+    class PermissionUiItem(val info: PermissionWithInfo, val isGranted: Boolean, val showRational: Boolean = false)
 
     private val mandatory = listOf(
         PermissionWithInfo(
@@ -56,12 +54,13 @@ class PermissionViewModel @Inject constructor(
         }
 
     private val _mandatoryState = MutableStateFlow(mandatory.map { it.toUiItem() })
-    val mandatoryState: StateFlow<List<PermissionUiItem>> = _mandatoryState
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), mandatory.map { it.toUiItem() })
+    val mandatoryState: StateFlow<List<PermissionUiItem>> = _mandatoryState.asStateFlow()
 
     private val _optionalState = MutableStateFlow(optional.map { it.toUiItem() })
-    val optionalState: StateFlow<List<PermissionUiItem>> = _optionalState
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), optional.map { it.toUiItem() })
+    val optionalState: StateFlow<List<PermissionUiItem>> = _optionalState.asStateFlow()
+
+    val isOnboardingDone: StateFlow<Boolean> = repo.isOnboardingDone
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     fun refreshPermissionsStatus() {
         _mandatoryState.update { list -> list.map { it.info.toUiItem() } }
@@ -74,8 +73,8 @@ class PermissionViewModel @Inject constructor(
     fun isPermissionGranted(permission: String): Boolean =
         context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 
-    fun markOnBoardingComplete() = viewModelScope.launch { repo.setOnboardingDone(true) }
-
-    private fun PermissionWithInfo.toUiItem() =
-        PermissionUiItem(this, isPermissionGranted(permission))
+    private fun PermissionWithInfo.toUiItem(): PermissionUiItem {
+        val granted = isPermissionGranted(permission)
+        return PermissionUiItem(this, isGranted = granted, showRational = !granted)
+    }
 }
