@@ -2,9 +2,15 @@ package com.example.login.ui.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,12 +27,43 @@ import com.example.common.utils.MyInput
 import com.example.login.ui.viewmodel.LoginViewModel
 
 @Composable
-fun LoginScreen(navigateOnSuccess: () -> Unit, navigateOnFail: () -> Unit, vm: LoginViewModel = hiltViewModel()) {
+fun LoginScreen(navigateToHome: () -> Unit, vm: LoginViewModel = hiltViewModel()) {
+    val isReadingSms by vm.isReadingSms.collectAsStateWithLifecycle(initialValue = true)
+    val isUserSetupDone by vm.isUserSetupDone.collectAsStateWithLifecycle(initialValue = false)
     val isOnboardingDone by vm.isOnboardingDone.collectAsStateWithLifecycle(initialValue = false)
-    if (isOnboardingDone) navigateOnSuccess()
-    LoginContent { firstName, lastName ->
-        vm.setupUserName(firstName, lastName)
-        navigateOnFail()
+
+    LaunchedEffect(isOnboardingDone) {
+        if (isOnboardingDone) navigateToHome()
+    }
+
+    LaunchedEffect(isUserSetupDone, isReadingSms) {
+        if (isUserSetupDone && !isReadingSms) vm.completeOnboarding()
+    }
+
+    if (isUserSetupDone) {
+        ReadingSmsContent()
+    } else {
+        LoginContent { firstName, lastName ->
+            vm.setupUserName(firstName, lastName)
+        }
+    }
+}
+
+@Composable
+fun ReadingSmsContent() {
+    ScreenScaffold("Setup Your Profile") { paddingValues ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(top = paddingValues.calculateTopPadding())
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CircularProgressIndicator()
+            Spacer(Modifier.height(16.dp))
+            Text("Your SMS are still being read\u2026")
+        }
     }
 }
 
@@ -59,7 +96,7 @@ fun LoginContent(onSave: (String, String) -> Unit = { _, _ -> }) {
             MyInput.Button(
                 "Save Profile",
                 onClick = {
-                    onSave(userFirstName, userLastName)
+                    onSave(userFirstName.trim(), userLastName.trim())
                 }
             )
         }
@@ -79,5 +116,21 @@ fun LoginScreenPreviewDark() {
 fun LoginScreenPreview() {
     FinancesTheme {
         LoginContent()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ReadingSmsContentPreview() {
+    FinancesTheme {
+        ReadingSmsContent()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ReadingSmsContentPreviewDark() {
+    FinancesTheme(true) {
+        ReadingSmsContent()
     }
 }
