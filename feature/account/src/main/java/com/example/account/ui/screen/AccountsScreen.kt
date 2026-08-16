@@ -26,7 +26,10 @@ import com.example.core.database.models.AccountIcon
 import com.example.core.database.models.AccountType
 
 @Composable
-fun AccountsScreen(onAccountClick: (Int) -> Unit, onAddAccountClick: () -> Unit) {
+fun AccountsScreen(
+    onAccountClick: (Int) -> Unit,
+    onAddAccountClick: () -> Unit
+) {
     val viewmodel: AccountsViewModel = hiltViewModel()
     val accounts by viewmodel.accounts.collectAsStateWithLifecycle(emptyList())
     val netBalance by viewmodel.netWorth.collectAsStateWithLifecycle(0L)
