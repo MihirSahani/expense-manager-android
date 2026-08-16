@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.common.ui.component.IconAndRow
 import com.example.common.utils.MyText
 import com.example.core.database.entity.Account
 
@@ -17,19 +18,32 @@ fun AccountItem(account: Account, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(16.dp, 8.dp),
+            .clickable { onClick() },
+            // .padding(16.dp, 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                MyText.RowHeader(account.name)
-                MyText.TransactionAmount(account.balance)
+        // Column {
+        //     Row(
+        //         modifier = Modifier.fillMaxWidth(),
+        //         horizontalArrangement = Arrangement.SpaceBetween
+        //     ) {
+        //         MyText.RowHeader(account.name)
+        //         MyText.TransactionAmount(account.balance)
+        //     }
+        //     MyText.RowBody(account.type.display())
+        // }
+
+        IconAndRow(account.icon.imageVector, account.color) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    MyText.RowHeader(account.name)
+                    MyText.TransactionAmount(account.balance)
+                }
+                MyText.RowBody(account.type.display())
             }
-            MyText.RowBody(account.type.name)
         }
     }
 }

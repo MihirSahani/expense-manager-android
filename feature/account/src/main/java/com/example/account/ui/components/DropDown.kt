@@ -28,7 +28,7 @@ fun DropDown(type: AccountType, onTypeSelected: (AccountType) -> Unit) {
             .fillMaxWidth()
     ) {
         MyInput.TextField(
-            type.name,
+            type.display(),
             {},
             "Account Type",
             trailingIcon = null,
@@ -42,7 +42,7 @@ fun DropDown(type: AccountType, onTypeSelected: (AccountType) -> Unit) {
         ) {
             AccountType.entries.forEach { accountType->
                 DropdownMenuItem(
-                    text =  { MyText.RowBody(accountType.name) },
+                    text =  { MyText.RowBody(accountType.display()) },
                     onClick = {
                         onTypeSelected(accountType)
                         expanded = false
