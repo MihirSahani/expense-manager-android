@@ -87,7 +87,7 @@ fun App() {
             }
             composable(Screen.Accounts.route) {
                 AccountsScreen(
-                    { id -> navController.navigate(Screen.Account(id)) },
+                    { id -> navController.navigate(Screen.Account(id).route) },
                     { navController.navigate(Screen.AddAccount.route) }
                 )
             }
@@ -104,7 +104,7 @@ fun App() {
             }
 
             composable(Screen.Categories.route) {
-                CategoriesScreen({ id -> navController.navigate(Screen.Category(id)) })
+                CategoriesScreen({ id -> navController.navigate(Screen.Category(id).route) })
             }
 
             composable(
@@ -121,7 +121,7 @@ fun App() {
             }
 
             composable(Screen.Transactions.route) {
-                TransactionHistoryScreen { id -> navController.navigate(Screen.Transaction(id)) }
+                TransactionHistoryScreen { id -> navController.navigate(Screen.Transaction(id).route) }
             }
             composable(
                 Screen.Transaction.ROUTE,
