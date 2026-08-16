@@ -5,11 +5,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Money
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -25,6 +29,7 @@ import com.example.common.utils.MyText
 object NavRoutes {
     const val ACCOUNTS = "accounts"
     const val ANALYTICS = "analytics"
+    const val HOME = "home"
     const val TRANSACTIONS = "transactions"
     const val SETTINGS = "settings"
 }
@@ -34,16 +39,19 @@ fun NavigationBar(
     currentRoute: String?,
     navigateToAccounts: () -> Unit,
     navigateToAnalytics: () -> Unit,
+    navigateToHome: () -> Unit,
     navigateToTransactionHistory: () -> Unit,
     navigateToSettings: () -> Unit,
     accountsRoute: String = NavRoutes.ACCOUNTS,
     analyticsRoute: String = NavRoutes.ANALYTICS,
+    homeRoute: String = NavRoutes.HOME,
     transactionsRoute: String = NavRoutes.TRANSACTIONS,
     settingsRoute: String = NavRoutes.SETTINGS
 ) {
     Row(
         Modifier
             .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars)
             .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
@@ -59,6 +67,12 @@ fun NavigationBar(
             imageVector = Icons.Default.Analytics,
             selected = currentRoute == analyticsRoute,
             onClick = navigateToAnalytics
+        )
+        SingleNavigationButton(
+            text = "Home",
+            imageVector = Icons.Default.Home,
+            selected = currentRoute == homeRoute,
+            onClick = navigateToHome
         )
         SingleNavigationButton(
             text = "Transactions",
@@ -85,6 +99,7 @@ fun NavigationBarPreview() {
                 currentRoute = "accounts",
                 navigateToAccounts = {},
                 navigateToAnalytics = {},
+                navigateToHome = {},
                 navigateToTransactionHistory = {},
                 navigateToSettings = {}
             )
@@ -101,6 +116,7 @@ fun NavigationBarPreviewDark() {
                 currentRoute = "transactions",
                 navigateToAccounts = {},
                 navigateToAnalytics = {},
+                navigateToHome = {},
                 navigateToTransactionHistory = {},
                 navigateToSettings = {}
             )
