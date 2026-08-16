@@ -33,6 +33,7 @@ fun App() {
 
     val bottomBarRoutes = setOf(
         Screen.Accounts.route,
+        Screen.Analytics.route,
         Screen.Home.route,
         Screen.Transactions.route,
         Screen.Settings.route
