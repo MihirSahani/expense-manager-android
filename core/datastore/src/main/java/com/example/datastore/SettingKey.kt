@@ -15,4 +15,6 @@ object SettingKey {
     val IS_ONBOARDING_DONE = booleanPreferencesKey("is_onboarding_done") // *false / true
 
     val SALARY_CREDIT_TIME = longPreferencesKey("salary_credit_time") // *0 / ...
+
+    val SMS_READ_TIME = longPreferencesKey("sms_read_time") // *0 / ...
 }

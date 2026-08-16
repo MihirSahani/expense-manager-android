@@ -9,13 +9,17 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.datastore.model.Currency
 import com.example.datastore.model.CycleType
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
 
 val Context.settingDataStore: DataStore<Preferences> by preferencesDataStore("app-setting")
 
-class Setting (val context: Context) {
+@Singleton
+class Setting @Inject constructor(@ApplicationContext val context: Context) {
     val userFirstName: Flow<String> = getSetting { preferences ->
         preferences[SettingKey.USER_FIST_NAME] ?: "Jane"
     }
@@ -34,6 +38,10 @@ class Setting (val context: Context) {
 
     val salaryCreditTime: Flow<Long> = getSetting { preferences ->
         preferences[SettingKey.SALARY_CREDIT_TIME] ?: 0L
+    }
+
+    val smsReadTime: Flow<Long> = getSetting { preferences ->
+        preferences[SettingKey.SMS_READ_TIME] ?: 0L
     }
 
     suspend fun setUserFirstName(firstName: String) {
@@ -61,6 +69,10 @@ class Setting (val context: Context) {
 
     suspend fun setSalaryCreditTime(salaryCreditTime: Long) {
         setSetting(SettingKey.SALARY_CREDIT_TIME, salaryCreditTime)
+    }
+
+    suspend fun setSmsReadTime(smsReadTime: Long) {
+        setSetting(SettingKey.SMS_READ_TIME, smsReadTime)
     }
 
     private fun <T> getSetting(transform: (Preferences) -> T): Flow<T> =
