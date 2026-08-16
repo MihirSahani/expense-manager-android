@@ -49,7 +49,11 @@ class TransactionRepository @Inject constructor(
         }
     }
 
-    suspend fun createTransaction(transaction: Transaction) {
+    suspend fun create(transactions: List<Transaction>) {
+        dao.create(transactions)
+    }
+
+    suspend fun create(transaction: Transaction) {
         dao.create(transaction)
     }
 

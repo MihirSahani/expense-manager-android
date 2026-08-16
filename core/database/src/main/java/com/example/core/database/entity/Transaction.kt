@@ -45,7 +45,7 @@ data class Transaction(
     @ColumnInfo("payee")
     var payee: String,
     @ColumnInfo("transaction_type")
-    var transactionType: TransactionType?,
+    var transactionType: TransactionType,
     @ColumnInfo("reference_id")
     var referenceId: String?,
     @ColumnInfo("description")

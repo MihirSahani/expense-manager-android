@@ -58,6 +58,9 @@ abstract class TransactionDAO {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun create(transaction: Transaction)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun create(transactions: List<Transaction>)
+
     // ----------------------------------- Updating Transactions ----------------------------------
     @Update
     abstract suspend fun update(transaction: Transaction)
