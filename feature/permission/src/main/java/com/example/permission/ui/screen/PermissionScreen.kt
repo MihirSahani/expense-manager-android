@@ -30,6 +30,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.common.model.DefaultColors
 import com.example.common.ui.component.LazyListOfItems
+import com.example.common.ui.component.ListWrapper
 import com.example.common.ui.component.ScreenScaffold
 import com.example.common.ui.theme.FinancesTheme
 import com.example.common.utils.MyInput
@@ -85,13 +86,7 @@ fun PermissionContent(
     }
 
     ScreenScaffold("Permissions") { paddingValues ->
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(top = paddingValues.calculateTopPadding())
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
+        ListWrapper(paddingValues) {
             LazyListOfItems(mandatory, "Mandatory Permissions") { item ->
                 PermissionRow(item)
             }

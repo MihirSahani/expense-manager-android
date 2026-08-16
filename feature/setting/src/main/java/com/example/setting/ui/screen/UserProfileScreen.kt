@@ -14,6 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.common.ui.component.ListWrapper
 import com.example.common.ui.component.ScreenScaffold
 import com.example.common.ui.theme.FinancesTheme
 import com.example.common.utils.MyInput
@@ -40,13 +41,7 @@ fun UserProfileContent(firstName: String = "", lastName: String? = null, onSave:
     var firstNameState by remember { mutableStateOf(firstName) }
     var lastNameState by remember { mutableStateOf(lastName) }
     ScreenScaffold("User Profile") { paddingValues ->
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(top = paddingValues.calculateTopPadding())
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        ListWrapper(paddingValues) {
             MyInput.TextField(
                 value = firstNameState,
                 onValueChange = { firstNameState = it },

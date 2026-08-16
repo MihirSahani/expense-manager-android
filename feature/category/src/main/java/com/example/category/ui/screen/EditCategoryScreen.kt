@@ -19,6 +19,7 @@ import com.example.category.ui.viewmodel.CategoryViewModel
 import com.example.common.model.DefaultColors
 import com.example.common.ui.component.ItemAndDivider
 import com.example.common.ui.component.ListOfItems
+import com.example.common.ui.component.ListWrapper
 import com.example.common.ui.component.ScreenScaffold
 import com.example.common.ui.theme.FinancesTheme
 import com.example.common.utils.MyInput
@@ -52,13 +53,7 @@ fun EditCategoryContent(
         val type by remember { mutableStateOf(category.type) }
         var budget by remember { mutableStateOf(category.budgetPerCycle?.div(100.0)) }
 
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(top = paddingValues.calculateTopPadding())
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        ListWrapper(paddingValues) {
             ListOfItems {
                 ItemAndDivider(true) {
                     MyText.RowBody("Category Name")

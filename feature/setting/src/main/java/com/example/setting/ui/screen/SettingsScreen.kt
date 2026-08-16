@@ -17,6 +17,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.common.ui.component.ItemAndDivider
 import com.example.common.ui.component.ListOfItems
+import com.example.common.ui.component.ListWrapper
 import com.example.common.ui.component.ScreenScaffold
 import com.example.common.ui.theme.FinancesTheme
 import com.example.common.utils.MyText
@@ -80,13 +81,7 @@ private fun SettingsScreenContent(
     )
 
     ScreenScaffold("Settings") { padding ->
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(top = padding.calculateTopPadding())
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
+        ListWrapper(padding) {
             ListOfItems {
                 ItemAndDivider(true, modifier = Modifier.clickable { onUserProfileClick() }) {
                     MyText.RowBody("User Profile")

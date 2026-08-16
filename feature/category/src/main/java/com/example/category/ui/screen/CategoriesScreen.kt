@@ -13,6 +13,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.category.ui.component.CategoryItem
 import com.example.category.ui.viewmodel.CategoriesViewModel
 import com.example.common.ui.component.LazyListOfItems
+import com.example.common.ui.component.ListWrapper
 import com.example.common.ui.component.ScreenScaffold
 import com.example.common.ui.theme.FinancesTheme
 import com.example.core.database.entity.Category
@@ -39,12 +40,7 @@ fun CategoriesContent(
     onClick: (Int) -> Unit
 ) {
     ScreenScaffold("Categories") { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = paddingValues.calculateTopPadding())
-                .padding(horizontal = 16.dp)
-        ) {
+        ListWrapper(paddingValues) {
             LazyListOfItems(categoriesWithRemainingBalance) { categoryWithRemainingBalance ->
                 CategoryItem(
                     categoryWithRemainingBalance,

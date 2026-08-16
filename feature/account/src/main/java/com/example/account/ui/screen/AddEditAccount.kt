@@ -28,6 +28,7 @@ import com.example.account.ui.components.DropDown
 import com.example.account.ui.viewmodel.AccountViewModel
 import com.example.common.model.DefaultColors
 import com.example.common.ui.component.ItemAndDivider
+import com.example.common.ui.component.ListWrapper
 import com.example.common.ui.component.ScreenScaffold
 import com.example.common.ui.component.SingleRowItem
 import com.example.common.ui.theme.FinancesTheme
@@ -93,13 +94,8 @@ fun AddEditAccountContent(
 
         var showDialog by remember { mutableStateOf(false) }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = paddingValues.calculateTopPadding())
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
+        ListWrapper(paddingValues) {
+
             ColorAndIconPicker(
                 color,
                 icon,
