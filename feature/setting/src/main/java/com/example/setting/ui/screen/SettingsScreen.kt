@@ -102,7 +102,7 @@ private fun SettingsScreenContent(
 
                 ItemAndDivider(modifier = Modifier.clickable { showCycleTypeDialog = true }) {
                     MyText.RowBody("Cycle Type")
-                    MyText.RowHeader(cycleType.name)
+                    MyText.RowHeader(cycleType.display())
                 }
 
                 ItemAndDivider {
