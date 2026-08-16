@@ -41,7 +41,7 @@ fun ScreenScaffold(title: String, icon: @Composable () -> Unit = {}, floatingAct
         ) { padding ->
             Box(
                 Modifier
-                    .padding(padding)
+                    .padding(padding.calculateTopPadding())
                     .fillMaxSize()
                 ,
                 contentAlignment = Alignment.Center,
