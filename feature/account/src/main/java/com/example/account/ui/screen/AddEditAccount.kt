@@ -83,7 +83,7 @@ fun AddEditAccountContent(
         if (account == null) throw IllegalStateException("Account is null, this should not happen")
 
         var name by remember { mutableStateOf(account.name) }
-        var balanceText by remember { mutableStateOf(account.balance.toString()) }
+        var balanceText by remember { mutableStateOf(account.balance.toDouble().div(100).toString()) }
 
         var type by remember { mutableStateOf(account.type) } // drop down
         var accountNumber by remember { mutableStateOf(account.accountNumber) }
@@ -149,7 +149,7 @@ fun AddEditAccountContent(
                 text = "Save",
                 onClick = {
                     account.name = name
-                    account.balance = balanceText.toLongOrNull() ?: 0L
+                    account.balance = balanceText.toDoubleOrNull()?.times(100)?.toLong() ?: 0L
                     account.type = type
                     account.accountNumber = accountNumber
                     account.icon = icon
