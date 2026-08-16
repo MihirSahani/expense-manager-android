@@ -49,7 +49,7 @@ class TransactionViewModel @Inject constructor(
 
     fun createTransaction(transaction: Transaction) {
         viewModelScope.launch {
-            repo.createTransaction(transaction)
+            repo.create(transaction)
         }
     }
 

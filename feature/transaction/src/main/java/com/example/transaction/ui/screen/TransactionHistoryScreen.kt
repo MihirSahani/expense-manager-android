@@ -26,7 +26,9 @@ import com.example.transaction.ui.viewmodel.TransactionsHistoryViewModel
 import kotlinx.coroutines.flow.flowOf
 
 @Composable
-fun TransactionHistoryScreen(onTransactionClick: (Int) -> Unit) {
+fun TransactionHistoryScreen(
+    onTransactionClick: (Int) -> Unit
+) {
     val viewModel: TransactionsHistoryViewModel = hiltViewModel()
     val showPastCycle by viewModel.showPastCycle.collectAsState()
     TransactionHistoryScreen(
@@ -61,7 +63,8 @@ fun TransactionHistoryScreen(
         icon = icon
     ) { padding ->
         ListOfTransactions(
-            modifier = Modifier.padding(top = padding.calculateTopPadding()),
+            modifier = Modifier
+                .padding(top = padding.calculateTopPadding()),
             items = items,
             onTransactionClick = { transactionId -> onTransactionClick(transactionId) }
         )

@@ -144,7 +144,7 @@ fun EditTransactionContent(
                 transaction.referenceId?.let { referenceId ->
                     ItemAndDivider {
                         MyText.RowBody("Reference ID")
-                        MyText.RowHeader(referenceId.toString())
+                        MyText.RowHeader(referenceId)
                     }
                 }
 
@@ -195,7 +195,7 @@ fun EditTransactionScreenPreview() {
         accountId = 1,
         categoryId = 1,
         payee = "Sample Payee",
-        referenceId = 1,
+        referenceId = "1",
         description = "Sample Description",
         transactionType = TransactionType.DEBIT,
         rawAccountNo = "1234"
@@ -236,7 +236,7 @@ fun TransactionScreenPreviewDark() {
         accountId = 1,
         categoryId = 1,
         payee = "Sample Payee",
-        referenceId = 1,
+        referenceId = "1",
         description = "Sample Description",
         transactionType = TransactionType.DEBIT,
         rawAccountNo = "1234"
