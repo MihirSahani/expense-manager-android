@@ -6,13 +6,31 @@ import android.content.pm.PackageManager
 import android.database.Cursor
 import android.provider.Telephony
 import androidx.core.content.ContextCompat
+import com.example.common.repository.TransactionRepository
 import com.example.core.database.entity.Transaction
 import com.example.core.database.models.TransactionType
+import com.example.datastore.Setting
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.util.Locale
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import javax.inject.Inject
 
-class SmsParser(private val context: Context) {
+class SmsParser @Inject constructor(
+    @param:ApplicationContext private val context: Context,
+    private val repo: TransactionRepository,
+    private val setting: Setting
+) {
+
+    val readingSmsMutex = Mutex()
 
     init {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
@@ -20,41 +38,36 @@ class SmsParser(private val context: Context) {
         }
     }
 
-    fun parseAllSmsData(): ArrayList<Transaction> {
-        val sms = ArrayList<Transaction>()
+    suspend fun parseSmses() = withContext(Dispatchers.IO) {
+        readingSmsMutex.withLock {
+            val lastSmsReadTime = setting.smsReadTime.first() + 1
+            setting.setSmsReadTime(System.currentTimeMillis() / 1000)
 
-        val cursor: Cursor? = context.contentResolver.query(
-            Telephony.Sms.Inbox.CONTENT_URI,
-            arrayOf(
-                Telephony.Sms.Inbox.SUBSCRIPTION_ID,
-                Telephony.Sms.Inbox.ADDRESS,
-                Telephony.Sms.Inbox.DATE,
-                Telephony.Sms.Inbox.BODY
-            ),
-            null, null, Telephony.Sms.Inbox.DEFAULT_SORT_ORDER
-        )
-        val totalSMS: Int = cursor?.count ?: 0
-        if (cursor != null && cursor.moveToFirst()) {
-            for (i in 0 until totalSMS) {
-                val address = cursor.getString(1)
-                val date = cursor.getLong(2)
-                val body = cursor.getString(3)
-                val transaction = parseSmsData(body, address, date)
-                if (transaction != null) {
-                    sms.add(transaction)
-                }
-                cursor.moveToNext()
+            val cursor: Cursor? = getCursor(lastSmsReadTime)
+
+            val rows = getArgsFromCursor(cursor)
+
+            val transactions = coroutineScope {
+                rows.map { (body, address, date) ->
+                    async {
+                        parseSmsData(body, address, date)
+                    }
+                }.awaitAll().filterNotNull()
             }
-        } else {
-            cursor?.close()
-            return ArrayList()
+            saveToDatabase(transactions)
         }
-        cursor.close()
-        return sms
     }
 
-    fun parseSingleSmsData(): Transaction? {
-        val cursor: Cursor? = context.contentResolver.query(
+    private suspend fun saveToDatabase(transactions: List<Transaction>) {
+        repo.create(transactions)
+    }
+
+    private fun getCursor(startSeconds: Long = 0L): Cursor? {
+        val startMillis = startSeconds * 1000
+        val selection = "${Telephony.Sms.Inbox.DATE} >= ?"
+        val selectionArgs = arrayOf(startMillis.toString())
+
+        return context.contentResolver.query(
             Telephony.Sms.Inbox.CONTENT_URI,
             arrayOf(
                 Telephony.Sms.Inbox.SUBSCRIPTION_ID,
@@ -62,18 +75,92 @@ class SmsParser(private val context: Context) {
                 Telephony.Sms.Inbox.DATE,
                 Telephony.Sms.Inbox.BODY
             ),
-            null, null, Telephony.Sms.Inbox.DEFAULT_SORT_ORDER
+            selection, selectionArgs, Telephony.Sms.Inbox.DEFAULT_SORT_ORDER
         )
-        if (cursor != null && cursor.moveToFirst()) {
-            val address = cursor.getString(1)
-            val date = cursor.getLong(2)
-            val body = cursor.getString(3)
-            val transaction = parseSmsData(body, address, date)
-            cursor.close()
-            return transaction
+    }
+
+    fun getArgsFromCursor(cursor: Cursor?): ArrayList<Triple<String, String, Long>> {
+        val rows = ArrayList<Triple<String, String, Long>>()
+        cursor?.use {
+            while (it.moveToNext()) {
+                val address = it.getString(1)
+                val dateSeconds = it.getLong(2) / 1000
+                val body = it.getString(3)
+                rows.add(Triple(body, address, dateSeconds))
+            }
         }
-        cursor?.close()
-        return null
+        return rows
+    }
+
+    fun parseSmsData(body: String, sender: String, timestamp: Long): Transaction? {
+        val regEx = Pattern.compile("(?i)(?:RS|INR|MRP)?(?:(?:RS|INR|MRP)\\.?\\s?)(\\d+(:?\\,\\d+)?(\\,\\d+)?(\\.\\d{1,2})?)+")
+        // Find instance of pattern matches
+        val transaction = Transaction(
+            amount = 0L,
+            categoryId = null,
+            datetime = timestamp,
+            rawAccountNo = null,
+            accountId = null,
+            payee = "",
+            transactionType = null,
+            referenceId = null,
+            description = body
+        )
+        val m = regEx.matcher(body)
+        if (m.find()) {
+            try {
+                if (checkSenderIsValid(sender)) {
+                    if (!body.contains("stmt", true)) {
+                        // found out debit and credit
+                        getAmountAndType(body, transaction, m)
+                        // transaction.parsed = "1"
+                        transaction.rawAccountNo = getRawAccountNumber(body)
+                        // check message is otp or not
+                        if (!body.contains("OTP", true)
+                            && !body.contains("minimum", true)
+                            && !body.contains("importance", true)
+                            && !body.contains("request", true)
+                            && !body.contains(Regex("(?i)\\blimit\\b"))
+                            && !body.contains("convert", true)
+                            && !body.contains("emi", true)
+                            && !body.contains("avoid paying", true)
+                            && !body.contains("autopay", true)
+                            && !body.contains("declined", true)
+                            && !body.contains("will be deducted", true)
+                            && !body.contains("E-statement", true)
+                            && !body.contains("funds are blocked", true)
+                            && !body.contains("SmartPay", true)
+                            && !body.contains("We are pleased to inform that", true)
+                            && !body.contains("has been opened", true)
+                            && transaction.transactionType != null
+                        ) {
+                            // bank wise filter
+                            // getAvailableBalance(transaction)
+                            transaction.referenceId = getRefNumber(body)
+                            transaction.payee = getPayee(body, transaction.transactionType!!)
+                            // val cardType =
+                            //     findCreditCardOrDebitCard(body, sender)
+                            // transaction.cardType = cardType
+                            transaction.payee = getPayee(body, transaction.transactionType!!)
+                            return transaction
+                        } else {
+                            return null
+                        }
+
+                    } else {
+                        return null
+                    }
+                } else {
+                    return null
+                }
+
+            } catch (e: java.lang.Exception) {
+                e.printStackTrace()
+                return null
+            }
+        } else {
+            return null
+        }
     }
 
     private fun findCreditCardOrDebitCard(msg: String, sender: String): String {
@@ -177,85 +264,7 @@ class SmsParser(private val context: Context) {
                 || sender.contains("INDUSB", true))
     }
 
-    private fun getFirstWord(text: String): String {
-        val index = text.indexOf(' ')
-        return if (index > -1) { // Check if there is more than one word.
-            text.substring(0, index).trim { it <= ' ' } // Extract first word.
-        } else {
-            text// Text is the first word itself.
-        }
-    }
-
-    fun parseSmsData(body: String, sender: String, timestamp: Long): Transaction? {
-        val regEx = Pattern.compile("(?i)(?:RS|INR|MRP)?(?:(?:RS|INR|MRP)\\.?\\s?)(\\d+(:?\\,\\d+)?(\\,\\d+)?(\\.\\d{1,2})?)+")
-        // Find instance of pattern matches
-        val transaction = Transaction(
-            amount = 0L,
-            categoryId = null,
-            datetime = timestamp,
-            rawAccountNo = null,
-            accountId = null,
-            payee = "",
-            transactionType = null,
-            referenceId = null,
-            description = body
-        )
-        val m = regEx.matcher(body)
-        if (m.find()) {
-            try {
-                if (checkSenderIsValid(sender)) {
-                    if (!body.contains("stmt", true)) {
-                        // found out debit and credit
-                        getAmountAndType(body, transaction, m)
-                        // transaction.parsed = "1"
-                        transaction.rawAccountNo = getRawAccountNumber(body)
-                        // check message is otp or not
-                        if (!body.contains("OTP", true)
-                            && !body.contains("minimum", true)
-                            && !body.contains("importance", true)
-                            && !body.contains("request", true)
-                            && !body.contains(Regex("(?i)\\blimit\\b"))
-                            && !body.contains("convert", true)
-                            && !body.contains("emi", true)
-                            && !body.contains("avoid paying", true)
-                            && !body.contains("autopay", true)
-                            && !body.contains("declined", true)
-                            && !body.contains("will be deducted", true)
-                            && !body.contains("E-statement", true)
-                            && !body.contains("funds are blocked", true)
-                            && !body.contains("SmartPay", true)
-                            && !body.contains("We are pleased to inform that", true)
-                            && !body.contains("has been opened", true)
-                            && transaction.transactionType != null
-                        ) {
-                            // bank wise filter
-                            // getAvailableBalance(transaction)
-                            transaction.referenceId = getRefNumber(body)
-                            transaction.payee = getPayee(body, transaction.transactionType!!)
-                            // val cardType =
-                            //     findCreditCardOrDebitCard(body, sender)
-                            // transaction.cardType = cardType
-                            transaction.payee = getPayee(body, transaction.transactionType!!)
-                            return transaction
-                        } else {
-                            return null
-                        }
-
-                    } else {
-                        return null
-                    }
-                } else {
-                    return null
-                }
-
-            } catch (e: java.lang.Exception) {
-                e.printStackTrace()
-                return null
-            }
-        } else {
-            return null
-        }
-    }
+    private fun getFirstWord(text: String) = text.substringBefore(' ').trimStart()
 
     private fun getAvailableBalance(transaction: Transaction, body: String) {
         val regEx =
