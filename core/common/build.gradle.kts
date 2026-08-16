@@ -29,8 +29,8 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:database"))
-    implementation(project(":core:datastore"))
+    api(project(":core:database"))
+    api(project(":core:datastore"))
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(platform(libs.androidx.compose.bom))

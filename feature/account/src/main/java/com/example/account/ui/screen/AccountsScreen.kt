@@ -16,9 +16,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.account.ui.components.AccountItem
-import com.example.account.ui.components.NetBalanceDisplay
+import com.example.common.ui.component.NetBalanceDisplay
 import com.example.account.ui.viewmodel.AccountsViewModel
 import com.example.common.ui.component.LazyListOfItems
+import com.example.common.ui.component.ListWrapper
 import com.example.common.ui.component.ScreenScaffold
 import com.example.common.ui.theme.FinancesTheme
 import com.example.core.database.entity.Account
@@ -61,13 +62,8 @@ fun AccountsContent(
         },
         isLoading = accounts.isEmpty()
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = paddingValues.calculateTopPadding())
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
+        ListWrapper(paddingValues) {
+
             NetBalanceDisplay(netBalance)
 
             LazyListOfItems(accounts) { account ->
