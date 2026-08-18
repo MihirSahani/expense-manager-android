@@ -7,7 +7,7 @@ import androidx.room3.Insert
 import androidx.room3.Query
 import androidx.room3.Update
 import com.example.core.database.entity.Category
-import com.example.core.database.projection.CategoryWithRemainingBalance
+import com.example.core.database.projection.CategoryWithInfo
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -27,12 +27,13 @@ abstract class CategoryDAO {
 
     @Query("""
         SELECT c.*, 
-               (c.budget_per_cycle - IFNULL(SUM(t.amount), 0)) AS remaining_balance
+               (c.budget_per_cycle - IFNULL(SUM(t.amount), 0)) AS remaining_balance,
+               SUM(t.amount) AS spent
         FROM categories c
         LEFT JOIN transactions t ON t.category_id = c.id AND t.datetime BETWEEN :start AND :end
         GROUP BY c.id
     """)
-    abstract fun getCategoriesWithRemainingBalanceFlow(start: Long = 0L, end: Long = Long.MAX_VALUE): Flow<List<CategoryWithRemainingBalance>>
+    abstract fun getCategoriesWithInfoFlow(start: Long = 0L, end: Long = Long.MAX_VALUE): Flow<List<CategoryWithInfo>>
 
     // TODO: implement "categories at risk" — categories whose spend this cycle exceeds
     //  budget_per_cycle. Needs a JOIN on transactions + the cycle window (start, end):

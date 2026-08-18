@@ -1,8 +1,7 @@
 package com.example.common.repository
 
 import com.example.core.database.dao.CategoryDAO
-import com.example.core.database.entity.Category
-import com.example.core.database.projection.CategoryWithRemainingBalance
+import com.example.core.database.projection.CategoryWithInfo
 import com.example.datastore.Setting
 import com.example.datastore.model.CycleType
 import jakarta.inject.Inject
@@ -19,12 +18,12 @@ class CategoryRepository @Inject constructor(
     val categories = dao.getAllCategoriesFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val getCategoriesWithRemainingBalance: Flow<List<CategoryWithRemainingBalance>> =
+    val getCategoriesWithInfo: Flow<List<CategoryWithInfo>> =
         setting.cycleType.flatMapLatest { cycleType ->
             when(cycleType) {
-                CycleType.MONTHLY -> getCategoriesWithRemainingBalanceForCurrentMonth()
+                CycleType.MONTHLY -> getCategoriesWithInfoForCurrentMonth()
                 CycleType.SALARY_DATE -> setting.salaryCreditTime.flatMapLatest { salaryCreditTime ->
-                    getCategoriesWithRemainingBalanceForCurrentCycle(salaryCreditTime)
+                    getCategoriesWithInfoForCurrentCycle(salaryCreditTime)
                 }
             }
         }
@@ -33,7 +32,7 @@ class CategoryRepository @Inject constructor(
 
     suspend fun updateCategoryBudget(id: Int, budget: Long?) = dao.updateBudget(id, budget)
 
-    private fun getCategoriesWithRemainingBalanceForCurrentMonth(): Flow<List<CategoryWithRemainingBalance>> {
+    private fun getCategoriesWithInfoForCurrentMonth(): Flow<List<CategoryWithInfo>> {
         val start = YearMonth.now()
             .atDay(1)
             .atStartOfDay(ZoneId.systemDefault())
@@ -44,10 +43,10 @@ class CategoryRepository @Inject constructor(
             .atZone(ZoneId.systemDefault())
             .toEpochSecond()
 
-        return dao.getCategoriesWithRemainingBalanceFlow(start, end)
+        return dao.getCategoriesWithInfoFlow(start, end)
     }
 
-    private fun getCategoriesWithRemainingBalanceForCurrentCycle(salaryCreditTime: Long): Flow<List<CategoryWithRemainingBalance>> {
-        return dao.getCategoriesWithRemainingBalanceFlow(start = salaryCreditTime)
+    private fun getCategoriesWithInfoForCurrentCycle(salaryCreditTime: Long): Flow<List<CategoryWithInfo>> {
+        return dao.getCategoriesWithInfoFlow(start = salaryCreditTime)
     }
 }

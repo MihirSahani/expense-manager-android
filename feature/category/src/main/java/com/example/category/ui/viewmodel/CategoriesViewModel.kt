@@ -19,7 +19,7 @@ class CategoriesViewModel @Inject constructor(
             emptyList()
         )
 
-    val categoriesWithRemainingBalance = repo.getCategoriesWithRemainingBalance
+    val categoriesWithInfo = repo.getCategoriesWithInfo
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
