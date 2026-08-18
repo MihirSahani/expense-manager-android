@@ -12,7 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.common.model.DefaultColors
+import com.example.core.database.models.DefaultColors
 import com.example.core.database.models.TransactionType
 import com.example.common.ui.theme.SamsungTextGrayDark
 import com.example.common.ui.theme.SamsungTextGrayLight

@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import com.example.common.model.DefaultColors
+import com.example.core.database.models.DefaultColors
 import com.example.common.ui.component.LazyListOfItems
 import com.example.common.utils.MyInput
 import com.example.common.utils.MyText

@@ -24,7 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.common.model.DefaultColors
+import com.example.core.database.models.DefaultColors
 import com.example.common.ui.component.ItemAndDivider
 import com.example.common.ui.component.ListOfItems
 import com.example.common.ui.component.ScreenScaffold

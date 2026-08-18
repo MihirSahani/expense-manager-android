@@ -26,7 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.account.ui.components.ColorAndIconPicker
 import com.example.account.ui.components.DropDown
 import com.example.account.ui.viewmodel.AccountViewModel
-import com.example.common.model.DefaultColors
+import com.example.core.database.models.DefaultColors
 import com.example.common.ui.component.ItemAndDivider
 import com.example.common.ui.component.ListWrapper
 import com.example.common.ui.component.ScreenScaffold

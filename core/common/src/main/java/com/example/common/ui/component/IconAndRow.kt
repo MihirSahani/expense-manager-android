@@ -21,7 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.example.common.model.DefaultColors
+import com.example.core.database.models.DefaultColors
 
 @Composable
 fun IconAndRow(icon: ImageVector?, bgColor: Int?, row: @Composable () -> Unit) {
