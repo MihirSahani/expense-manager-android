@@ -48,6 +48,7 @@ dependencies {
     implementation(project(":feature:permission"))
     implementation(project(":feature:login"))
     implementation(project(":feature:home"))
+    implementation(project(":feature:analysis"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

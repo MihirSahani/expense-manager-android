@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.account.ui.screen.AccountsScreen
 import com.example.account.ui.screen.AddEditAccountScreen
+import com.example.analysis.AnalysisScreen
 import com.example.category.ui.screen.CategoriesScreen
 import com.example.category.ui.screen.EditCategoryScreen
 import com.example.common.ui.component.NavigationBar
@@ -21,7 +22,6 @@ import com.example.login.ui.screen.LoginScreen
 import com.example.permission.ui.screen.PermissionScreen
 import com.example.setting.ui.screen.SettingsScreen
 import com.example.setting.ui.screen.UserProfileScreen
-import com.example.setting.ui.viewmodel.SettingViewModel
 import com.example.transaction.ui.screen.TransactionHistoryScreen
 import com.example.transaction.ui.screen.EditTransactionScreen
 
@@ -84,7 +84,11 @@ fun App() {
                 )
             }
             composable(Screen.Home.route) {
-                HomeScreen(hiltViewModel())
+                HomeScreen(
+                    { navController.navigate(Screen.Accounts.route) },
+                    { navController.navigate(Screen.Categories.route) },
+                    hiltViewModel()
+                )
             }
             composable(Screen.Accounts.route) {
                 AccountsScreen(
@@ -115,10 +119,11 @@ fun App() {
                     // nullable = true
                 })
             ) {
-                EditCategoryScreen()
+                EditCategoryScreen({ navController.popBackStack() })
             }
 
             composable(Screen.Analytics.route) {
+                AnalysisScreen()
             }
 
             composable(Screen.Transactions.route) {
