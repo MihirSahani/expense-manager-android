@@ -3,6 +3,7 @@ package com.example.common.repository
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import com.example.core.database.AppDatabase
 import com.example.core.database.dao.TransactionDAO
 import com.example.core.database.entity.Transaction
 import com.example.core.database.projection.TransactionWithCategory
@@ -19,7 +20,8 @@ class TransactionRepository @Inject constructor(
     val setting: Setting,
     val dao: TransactionDAO,
     val accountRepo: AccountRepository,
-    val categoryRepo: CategoryRepository
+    val categoryRepo: CategoryRepository,
+    val db: AppDatabase
 ) {
     fun getTransactionFlow(id: Int): Flow<Transaction?> {
         return dao.getTransactionFlow(id)
@@ -51,26 +53,32 @@ class TransactionRepository @Inject constructor(
 
     suspend fun create(transactions: List<Transaction>) {
         dao.create(transactions)
+        updateSalaryCreditTime()
     }
 
     suspend fun create(transaction: Transaction) {
         dao.create(transaction)
+        updateSalaryCreditTime()
     }
 
     suspend fun updateTransaction(transaction: Transaction) {
         dao.update(transaction)
+        updateSalaryCreditTime()
     }
 
     suspend fun updateTransactionCategory(transactionId: Int, categoryId: Int?) {
         dao.updateTransactionCategory(transactionId, categoryId)
+        updateSalaryCreditTime()
     }
 
     suspend fun updateTransactionsCategoryByPayee(payee: String, newCategoryId: Int?) {
         dao.updateTransactionsCategoryByPayee(payee, newCategoryId)
+        updateSalaryCreditTime()
     }
 
     suspend fun deleteTransaction(id: Int) {
         dao.deleteById(id)
+        updateSalaryCreditTime()
     }
 
     val accounts get() = accountRepo.accounts
@@ -114,5 +122,10 @@ class TransactionRepository @Inject constructor(
             config = PagingConfig(15),
             pagingSourceFactory = { dao.getTransactionsWithCategoryBetween(start, end) }
         ).flow
+    }
+
+    suspend fun updateSalaryCreditTime() {
+        val time = dao.getLatestIncomeTransactionTime() ?: 0L
+        setting.setSalaryCreditTime(time)
     }
 }

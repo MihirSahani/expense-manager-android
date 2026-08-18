@@ -54,6 +54,27 @@ abstract class TransactionDAO {
         start: Long=0, end: Long= Long.MAX_VALUE
     ): PagingSource<Int, TransactionWithCategory>
 
+    @Query("""
+        SELECT t.datetime 
+        FROM transactions t 
+        JOIN categories c ON t.category_id = c.id 
+        WHERE c.type = 'INCOME' 
+        ORDER BY t.datetime DESC 
+        LIMIT 1
+    """)
+    abstract suspend fun getLatestIncomeTransactionTime(): Long?
+
+    @Query("""
+        SELECT t.datetime 
+        FROM transactions t 
+        JOIN categories c ON t.category_id = c.id 
+        WHERE c.type = 'INCOME' 
+        ORDER BY t.datetime DESC 
+        LIMIT 1 
+        OFFSET 1
+    """)
+    abstract suspend fun getSecondLatestIncomeTransactionTime(): Long?
+
     // ---------------------------------- Creating Transactions ---------------------------------
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun create(transaction: Transaction)

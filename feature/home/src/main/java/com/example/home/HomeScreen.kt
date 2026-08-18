@@ -2,15 +2,13 @@ package com.example.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,9 +23,12 @@ import com.example.common.ui.theme.FinancesTheme
 import com.example.common.utils.MyText
 
 @Composable
-fun HomeScreen(vm: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(navigateToAccounts: () -> Unit, navigateToCategories: () -> Unit, vm: HomeViewModel = hiltViewModel()) {
+    LaunchedEffect(Unit) {
+        vm.refreshSalaryCreditTime()
+    }
     val netWorth by vm.netWorth.collectAsStateWithLifecycle(0L)
-    HomeContent(netWorth)
+    HomeContent(netWorth, navigateToAccounts, navigateToCategories)
 }
 
 @Composable

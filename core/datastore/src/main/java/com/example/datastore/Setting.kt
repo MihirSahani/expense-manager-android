@@ -19,7 +19,7 @@ import javax.inject.Singleton
 val Context.settingDataStore: DataStore<Preferences> by preferencesDataStore("app-setting")
 
 @Singleton
-class Setting @Inject constructor(@ApplicationContext val context: Context) {
+class Setting @Inject constructor(@param:ApplicationContext val context: Context) {
     val userFirstName: Flow<String> = getSetting { preferences ->
         preferences[SettingKey.USER_FIST_NAME] ?: "Jane"
     }
