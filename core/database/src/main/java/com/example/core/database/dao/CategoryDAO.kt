@@ -10,21 +10,56 @@ import com.example.core.database.entity.Category
 import com.example.core.database.projection.CategoryWithInfo
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Data Access Object for the `categories` table.
+ */
 @Dao
 abstract class CategoryDAO {
     // ----------------------------- Fetching Categories -----------------------------
+    /**
+     * Fetches a single category by its primary key.
+     *
+     * @param id the category id.
+     * @return the matching [Category], or `null` if none exists.
+     */
     @Query("SELECT * FROM categories WHERE id = :id")
     abstract suspend fun getCategory(id: Int): Category?
 
+    /**
+     * Observes a single category by its primary key.
+     *
+     * @param id the category id.
+     * @return a [Flow] emitting the matching [Category] (or `null`) whenever it changes.
+     */
     @Query("SELECT * FROM categories WHERE id = :id")
     abstract fun getCategoryFlow(id: Int): Flow<Category?>
 
+    /**
+     * Observes every category in the table.
+     *
+     * @return a [Flow] emitting the full category list whenever it changes.
+     */
     @Query("SELECT * FROM categories")
     abstract fun getAllCategoriesFlow(): Flow<List<Category>>
 
+    /**
+     * Fetches every category in the table as a paged source, for use with Paging 3.
+     *
+     * @return a [PagingSource] over all categories.
+     */
     @Query("SELECT * FROM categories")
     abstract fun getAllCategories(): PagingSource<Int, Category>
 
+    /**
+     * Observes every category together with its remaining budget and amount spent within a
+     * cycle window.
+     *
+     * @param start inclusive start of the cycle window, in epoch seconds. Defaults to the
+     * beginning of time.
+     * @param end inclusive end of the cycle window, in epoch seconds. Defaults to the end of
+     * time.
+     * @return a [Flow] emitting the [CategoryWithInfo] list whenever the underlying data changes.
+     */
     @Query("""
         SELECT c.*, 
                (c.budget_per_cycle - IFNULL(SUM(t.amount), 0)) AS remaining_balance,
@@ -43,17 +78,39 @@ abstract class CategoryDAO {
     //  Return Flow<List<Category>> (not suspend).
 
     // ---------------------------- Create --------------------------------------------
+    /**
+     * Inserts a new category.
+     *
+     * @param category the category to insert.
+     */
     @Insert
     abstract suspend fun create(category: Category)
 
     // ---------------------------- Update --------------------------------------------
+    /**
+     * Updates an existing category.
+     *
+     * @param category the category with updated field values.
+     */
     @Update
     abstract suspend fun update(category: Category)
 
+    /**
+     * Updates only the per-cycle budget of a category.
+     *
+     * @param id the category id.
+     * @param budget the new budget per cycle, or `null` to clear it.
+     */
     @Query("UPDATE categories SET budget_per_cycle = :budget WHERE id = :id")
     abstract suspend fun updateBudget(id: Int, budget: Long?)
 
     // ----------------------------- Delete -------------------------------------------
+    /**
+     * Deletes a category. Related transaction and preference rows react according to their
+     * foreign key rules (`SET_NULL`/`CASCADE`).
+     *
+     * @param category the category to delete.
+     */
     @Delete
     abstract suspend fun delete(category: Category)
 }

@@ -7,10 +7,15 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 import com.example.core.database.dao.AccountDAO
 import com.example.core.database.dao.CategoryDAO
+import com.example.core.database.dao.DebitCardPreferenceDAO
+import com.example.core.database.dao.LoanDAO
+import com.example.core.database.dao.PayeeCategoryPreferenceDAO
 import com.example.core.database.dao.TransactionDAO
 import com.example.core.database.models.CategoryIcon
 import com.example.core.database.models.CategoryType
 import com.example.core.database.models.DefaultColors
+import com.example.core.database.models.normalizeAccountIdentifier
+import com.example.core.database.models.normalizePayee
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,7 +26,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
-
     private data class DefaultCategory(
         val name: String,
         val type: CategoryType,
@@ -67,4 +71,15 @@ object DatabaseModule {
 
     @Provides
     fun provideCategoryDao(db: AppDatabase): CategoryDAO = db.categoryDao()
+
+    @Provides
+    fun provideDebitCardPreferenceDao(
+        db: AppDatabase
+    ): DebitCardPreferenceDAO = db.debitCardPreferenceDao()
+
+    @Provides
+    fun provideLoanDao(db: AppDatabase): LoanDAO = db.loanDao()
+
+    @Provides
+    fun providePayeeCategoryPreferenceDao(db: AppDatabase): PayeeCategoryPreferenceDAO = db.payeeCategoryPreferenceDao()
 }

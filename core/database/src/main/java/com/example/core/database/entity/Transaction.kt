@@ -25,7 +25,8 @@ import com.example.core.database.models.TransactionType
     ],
     indices = [
         Index("category_id"),
-        Index("datetime")
+        Index("datetime"),
+        Index("account_id")
     ]
 )
 data class Transaction(

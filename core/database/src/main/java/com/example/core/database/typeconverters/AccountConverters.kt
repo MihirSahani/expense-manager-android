@@ -11,8 +11,8 @@ class AccountConverters {
     @ColumnTypeConverter
     fun toAccountType(value: String): AccountType = AccountType.valueOf(value)
 
-   @ColumnTypeConverter
-   fun fromAccountIcon(icon: AccountIcon): String = icon.name
+    @ColumnTypeConverter
+    fun fromAccountIcon(icon: AccountIcon): String = icon.name
 
     @ColumnTypeConverter
     fun toAccountIcon(value: String): AccountIcon = AccountIcon.valueOf(value)
