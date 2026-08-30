@@ -1,4 +1,4 @@
-package com.example.transaction.ui.screen;
+package com.example.common.ui.component;
 
 import androidx.paging.PagingData;
 
@@ -15,12 +15,12 @@ import java.util.List;
  * caller binds directly to the stable {@code from(List)} method that exists across paging 3.x, which
  * avoids the version-specific synthetic entirely.
  */
-final class PreviewPagingData {
+public final class PreviewPagingData {
 
     private PreviewPagingData() {
     }
 
-    static <T> PagingData<T> from(List<? extends T> data) {
+    public static <T> PagingData<T> from(List<? extends T> data) {
         return PagingData.Companion.from(data);
     }
 }

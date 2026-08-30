@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 
 
@@ -168,11 +169,37 @@ class MyInput {
                         color = MaterialTheme.colorScheme.primaryContainer,
                         shape = RoundedCornerShape(8.dp)
                     )
-                    .clickable { onClick() }
+                    .clickable(enabled = enabled) { onClick() }
                     .padding(8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 MyText.RowHeader(text, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
+        }
+
+        /**
+         * A compact, wrap-content button for secondary/inline actions (e.g. a top-bar action
+         * next to a screen title), as opposed to [Button] which always fills the available width
+         * and uses a larger header-sized label.
+         */
+        @Composable
+        fun SmallButton(
+            text: String,
+            onClick: () -> Unit,
+            modifier: Modifier = Modifier,
+            enabled: Boolean = true
+        ) {
+            Box(
+                modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .clickable(enabled = enabled) { onClick() }
+                    .padding(horizontal = 12.dp, vertical = 3.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                MyText.RowBody(text, color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 13.sp)
             }
         }
     }
