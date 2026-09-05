@@ -98,7 +98,7 @@ class SmsParserTest {
         private fun loadSamples(): List<Sample> {
             val stream = SmsParserTest::class.java.getResourceAsStream("/out.csv")
                 ?: error("out.csv not found on test classpath")
-            val rows = stream.bufferedReader().use { it.readText() }.let(::splitCsvRows)
+            val rows = stream.bufferedReader().use { it.readText() }.let(TestCsv::parseCsvRows)
             return rows.drop(1).filter { it.isNotEmpty() && it.size >= 8 }.map { cols ->
                 val isTxn = cols[3].trim().toBooleanStrict()
                 Sample(
@@ -112,40 +112,6 @@ class SmsParserTest {
                     expAccount = if (isTxn) cols[7].trim().ifBlank { null } else null
                 )
             }
-        }
-
-        /** Minimal RFC-4180-style CSV reader: handles quoted fields containing commas and "" escapes. */
-        private fun splitCsvRows(text: String): List<List<String>> {
-            val rows = mutableListOf<List<String>>()
-            var field = StringBuilder()
-            var row = mutableListOf<String>()
-            var inQuotes = false
-            var i = 0
-            while (i < text.length) {
-                val c = text[i]
-                when {
-                    inQuotes && c == '"' && i + 1 < text.length && text[i + 1] == '"' -> {
-                        field.append('"'); i++
-                    }
-                    c == '"' -> inQuotes = !inQuotes
-                    c == ',' && !inQuotes -> {
-                        row.add(field.toString()); field = StringBuilder()
-                    }
-                    (c == '\n' || c == '\r') && !inQuotes -> {
-                        if (field.isNotEmpty() || row.isNotEmpty()) {
-                            row.add(field.toString()); field = StringBuilder()
-                            rows.add(row); row = mutableListOf()
-                        }
-                        if (c == '\r' && i + 1 < text.length && text[i + 1] == '\n') i++
-                    }
-                    else -> field.append(c)
-                }
-                i++
-            }
-            if (field.isNotEmpty() || row.isNotEmpty()) {
-                row.add(field.toString()); rows.add(row)
-            }
-            return rows
         }
     }
 }

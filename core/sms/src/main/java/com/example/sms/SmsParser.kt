@@ -34,6 +34,9 @@ class SmsParser @Inject constructor(
 
     val readingSmsMutex = Mutex()
 
+    /** Backs [firstDigitsOnward]'s digit extraction in [getRefNumber]. */
+    private val refNumberDigitsPattern = Pattern.compile("([0-9]+).*")
+
     init {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
             throw Exception("Permission READ_SMS is not granted. Please request the permission before using SmsParser.")
@@ -154,10 +157,6 @@ class SmsParser @Inject constructor(
                             // getAvailableBalance(transaction)
                             transaction.referenceId = getRefNumber(body)
                             transaction.payee = getPayee(body, transaction.transactionType!!)
-                            // val cardType =
-                            //     findCreditCardOrDebitCard(body, sender)
-                            // transaction.cardType = cardType
-                            transaction.payee = getPayee(body, transaction.transactionType!!)
                             return transaction
                         } else {
                             return null
@@ -177,62 +176,6 @@ class SmsParser @Inject constructor(
         } else {
             return null
         }
-    }
-
-    private fun findCreditCardOrDebitCard(msg: String, sender: String): String {
-        if (sender.trim().contains("+918586980859", true)
-            || sender.contains("08586980869", true)
-            || sender.contains("085869", true)
-            || sender.contains("ICICIB", true)
-            || sender.contains("HDFCBK", true)
-            || sender.contains("SBMSMS", true)
-            || sender.contains("SBIINB", true)
-            || sender.contains("SCISMS", true)
-            || sender.contains("CBSSBI", true)
-            || sender.contains("SBIPSG", true)
-            || sender.contains("SBIUPI", true)
-            || sender.contains("SBICRD", true)
-            || sender.contains("ATMSBI", true)
-            || sender.contains("QPMYAMEX", true)
-            || sender.contains("IDFCFB", true)
-            || sender.contains("UCOBNK", true)
-            || sender.contains("CANBNK", true)
-            || sender.contains("BOIIND", true)
-            || sender.contains("AXISBK", true)
-            || sender.contains("PAYTMB", true)
-            || sender.contains("UnionB", true)
-            || sender.contains("INDBNK", true)
-            || sender.contains("KOTAKB", true)
-            || sender.contains("CENTBK", true)
-            || sender.contains("SCBANK", true)
-            || sender.contains("PNBSMS", true)
-            || sender.contains("DOPBNK", true)
-            || sender.contains("YESBNK", true)
-            || sender.contains("IDBIBK", true)
-            || sender.contains("ALBANK", true)
-            || sender.contains("CITIBK", true)
-            || sender.contains("ANDBNK", true)
-            || sender.contains("BOBTXN", true)
-            || sender.contains("IOBCHN", true)
-            || sender.contains("MAHABK", true)
-            || sender.contains("OBCBNK", true)
-            || sender.contains("RBLBNK", true)
-            || sender.contains("RBLCRD", true)
-            || sender.contains("SPRCRD", true)
-            || sender.contains("HSBCBK", true)
-            || sender.contains("HSBCIN", true)
-            || sender.contains("INDUSB", true)
-        ) {
-            return if (msg.contains("CREDIT CARD", ignoreCase = true) ||
-                msg.contains("SBICARD", ignoreCase = true)
-            ) {
-                "credit card"
-            } else {
-                "debit card"
-            }
-        }
-        return ""
-
     }
 
     private fun checkSenderIsValid(sender: String): Boolean {
@@ -464,1096 +407,245 @@ class SmsParser @Inject constructor(
 
     }
 
+    /**
+     * The text after the first occurrence of [keyword] in [body] (optionally lowercased first).
+     * Mirrors the `val parts = body.split(keyword); val data = if (parts.size > 1) parts[1] else
+     * parts[0]` shape repeated throughout [getRefNumber]'s branches. When [requireExactlyTwoParts]
+     * is `true`, a [keyword] occurring more than once falls back to the text *before* the first
+     * occurrence instead (matching call sites that originally checked `parts.size == 2`).
+     */
+    private fun segmentAfter(
+        body: String,
+        keyword: String,
+        lowercase: Boolean = true,
+        requireExactlyTwoParts: Boolean = false,
+        trim: Boolean = false
+    ): String {
+        val source = if (lowercase) body.lowercase(Locale.getDefault()) else body
+        val parts = source.split(keyword)
+        val data = if (requireExactlyTwoParts) {
+            if (parts.size == 2) parts[1] else parts[0]
+        } else {
+            if (parts.size > 1) parts[1] else parts[0]
+        }
+        return if (trim) data.trim() else data
+    }
+
+    /**
+     * Cuts [data] at the first terminator (checked case-insensitively) from [terminators] whose
+     * (check, split) pair matches, prepending [prefix]; falls back to [fallback] (the untouched
+     * [data] by default) if none match. Mirrors the `when { data.contains(x, true) ->
+     * data.split(y)[0] ... else -> data }` shape repeated throughout [getRefNumber]'s branches.
+     * Most terminators check and split on the same string; a few original branches checked for
+     * one string but split on another, so entries are (checkString, splitString) pairs to
+     * preserve that exactly.
+     */
+    private fun cutAtTerminator(
+        data: String,
+        vararg terminators: Pair<String, String>,
+        prefix: String = "",
+        fallback: String = data
+    ): String {
+        for ((check, splitOn) in terminators) {
+            if (data.contains(check, ignoreCase = true)) {
+                return prefix + data.split(splitOn)[0]
+            }
+        }
+        return fallback
+    }
+
+    /** The substring of [s] starting at its first digit, mirroring the original
+     * `Pattern.compile("([0-9]+).*")` + `Matcher.find()` digit-extraction used by the IMPS/RefNo
+     * branches (greedy `.*` means it captures everything from the first digit to the end of that
+     * line, not just the digits themselves). Returns `""` if [s] has no digit. */
+    private fun firstDigitsOnward(s: String): String {
+        val matcher = refNumberDigitsPattern.matcher(s)
+        return if (matcher.find()) matcher.group() else ""
+    }
+
+    /**
+     * Extracts a short human-readable reference string from a bank SMS. Each branch below
+     * recognizes one keyword/phrase bank messages tend to use for their reference/transaction
+     * number, pulls out the text around it, and cuts it at whichever terminator (". ", " on ",
+     * ")", ...) appears first, using [segmentAfter]/[cutAtTerminator]/[firstDigitsOnward] to
+     * factor out that repeated shape. Each branch still owns its exact keyword, terminator list,
+     * and prefix/suffix wrapping, since those (and a handful of quirks like asymmetric
+     * check/split strings or lowercase-only-for-splitting) differ per bank-message format and
+     * are preserved exactly as before -- see [SmsParserRefNumberRegressionTest].
+     */
     private fun getRefNumber(body: String): String {
-        //Info, At, Linked to, NEFT, Ref, transfer from, transfer to, for, of, IMPS
-        //Till dot Space, on, has
         var refNumber = ""
         if (body.contains("NetBanking", true)) {
-            // refNumber = " NetBanking"
-            if (body.lowercase(Locale.getDefault()).contains(" to ", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split(" to ")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                refNumber = when {
-                    data.contains(". ", true) -> {
-                        data.split(". ")[0]
-                    }
-
-                    data.contains(" on ", true) -> {
-                        data.split(" on ")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        data.split(")")[0]
-                    }
-
-                    else -> {
-                        //data
-                        "NetBanking"
-                    }
-                }
-            } else if (body.lowercase(Locale.getDefault()).contains(" for ", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split(" for ")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                refNumber = when {
-                    data.contains(". ", true) -> {
-                        data.split(". ")[0]
-                    }
-
-                    data.contains(" on ", true) -> {
-                        data.split(" on ")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        data.split(")")[0]
-                    }
-
-                    else -> {
-                        //data
-                        "NetBanking"
-                    }
-                }
+            val keyword = when {
+                body.contains(" to ", true) -> " to "
+                body.contains(" for ", true) -> " for "
+                else -> null
             }
-
+            if (keyword != null) {
+                val data = segmentAfter(body, keyword)
+                refNumber = cutAtTerminator(
+                    data, ". " to ". ", " on " to " on ", ")" to ")",
+                    fallback = "NetBanking"
+                )
+            }
         } else if (body.contains("Cash Deposit", true)) {
             refNumber = "Cash Deposit"
         } else if (body.contains("withdrawn", true)) {
-            val dataList = body.lowercase(Locale.getDefault()).split(" at ")
-            val data = if (dataList.size > 1) {
-                dataList[1]
-            } else {
-                dataList[0]
-            }
-            refNumber = "withdrawn at " + when {
-                data.contains("on", true) -> {
-                    data.split(" on")[0]
-                }
-
-                data.contains(".", true) -> {
-                    data.split(". ")[0]
-                }
-
-                data.contains(")", true) -> {
-                    data.split(")")[0]
-                }
-
-                else -> {
-                    data
-                }
-            }
+            val data = segmentAfter(body, " at ")
+            refNumber = "withdrawn at " + cutAtTerminator(data, "on" to " on", "." to ". ", ")" to ")")
         } else if (body.contains("towards", true)) {
-            val dataList = body.lowercase(Locale.getDefault()).split("towards ")
-            val data = if (dataList.size > 1) {
-                dataList[1]
-            } else {
-                dataList[0]
-            }
-            refNumber = when {
-                data.contains(" avl ", true) -> {
-                    data.split(" avl ")[0]
-                }
-
-                data.contains(". ", true) -> {
-                    data.split(". ")[0]
-                }
-
-                data.contains("on", true) -> {
-                    data.split(" on")[0]
-                }
-
-                data.contains(")", true) -> {
-                    data.split(")")[0]
-                }
-
-                else -> {
-                    data
-                }
-            }
-
+            val data = segmentAfter(body, "towards ")
+            refNumber = cutAtTerminator(data, " avl " to " avl ", ". " to ". ", "on" to " on", ")" to ")")
         } else if (body.contains("thru", true)) {
             if (!body.contains("thru clg", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split("thru ")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                refNumber = when {
-                    data.contains(". ", true) -> {
-                        data.split(".")[0]
-                    }
-
-                    data.contains("on", true) -> {
-                        data.split(" on")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        data.split(")")[0]
-                    }
-
-                    else -> {
-                        data
-                    }
-                }
+                val data = segmentAfter(body, "thru ")
+                refNumber = cutAtTerminator(data, ". " to ".", "on" to " on", ")" to ")")
             }
-
         } else if (body.contains("Credit card ending", true)) {
-            if (body.contains("has been", true) && body.contains("from", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split("from ")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                refNumber = when {
-                    data.contains(" on", true) -> {
-                        data.split(" on")[0]
-                    }
-
-                    data.contains(". ", true) -> {
-                        data.split(". ")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        data.split(")")[0]
-                    }
-
-                    else -> {
-                        data
-                    }
-                }
+            refNumber = if (body.contains("has been", true) && body.contains("from", true)) {
+                val data = segmentAfter(body, "from ")
+                cutAtTerminator(data, " on" to " on", ". " to ". ", ")" to ")")
             } else if (body.contains("has been", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split("has been ")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                refNumber = when {
-                    data.contains("on", true) -> {
-                        data.split(" on")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        data.split(")")[0]
-                    }
-
-                    data.contains(". ", true) -> {
-                        data.split(".")[0]
-                    }
-
-                    else -> {
-                        data
-                    }
-                }
+                val data = segmentAfter(body, "has been ")
+                cutAtTerminator(data, "on" to " on", ")" to ")", ". " to ".")
             } else {
-                val dataList = body.lowercase(Locale.getDefault()).split("from ")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                refNumber = when {
-                    data.contains("on", true) -> {
-                        data.split(" on")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        data.split(")")[0]
-                    }
-
-                    data.contains(". ", true) -> {
-                        data.split(".")[0]
-                    }
-
-                    else -> {
-                        data
-                    }
-                }
+                val data = segmentAfter(body, "from ")
+                cutAtTerminator(data, "on" to " on", ")" to ")", ". " to ".")
             }
-
         } else if (body.contains("NEFT", true)) {
-            val dataList = body.lowercase(Locale.getDefault()).split("neft")
-            //val p1 = Pattern.compile("([0-9]+).*")
-            val data = if (dataList.size > 1) {
-                dataList[1].trim()
-            } else {
-                dataList[0].trim()
-            }
-            refNumber = "NEFT " + when {
-                data.contains(")", true) -> {
-                    data.split(")")[0]
-                }
-
-                data.contains(".", true) -> {
-                    data.split(". ")[0]
-                }
-
-                data.contains("-", true) -> {
-                    data.split("-")[0]
-                }
-
-                else -> {
-                    data
-                }
-            }
+            val data = segmentAfter(body, "neft", trim = true)
+            refNumber = "NEFT " + cutAtTerminator(data, ")" to ")", "." to ". ", "-" to "-")
         } else if (body.contains("IMPS", true)) {
-            if (body.contains("Ref no")) {
-                val dataList = body.split("Ref no")
-                val p1 = Pattern.compile("([0-9]+).*")
-                var data = ""
-                if (dataList.size > 1) {
-                    val m1 = p1.matcher(dataList[1])
-                    while (m1.find()) {
-                        data = m1.group()
-                        break
-                    }
-                } else {
-                    val m1 = p1.matcher(dataList[0])
-                    while (m1.find()) {
-                        data = m1.group()
-                        break
-                    }
-                }
-                refNumber = when {
-                    data.contains(")", true) -> {
-                        "IMPS Ref no" + data.split(")")[0]
-                    }
-
-                    data.contains(".", true) -> {
-                        "IMPS Ref no" + data.split(".")[0]
-                    }
-
-                    else -> {
-                        data
-                    }
-                }
+            refNumber = if (body.contains("Ref no")) {
+                val parts = body.split("Ref no")
+                val data = firstDigitsOnward(if (parts.size > 1) parts[1] else parts[0])
+                cutAtTerminator(data, ")" to ")", "." to ".", prefix = "IMPS Ref no")
             } else {
-                val dataList = body.split("IMPS")
-                val p1 = Pattern.compile("([0-9]+).*")
-                var data = ""
-                if (dataList.size > 1) {
-                    val m1 = p1.matcher(dataList[1])
-                    while (m1.find()) {
-                        data = m1.group()
-                        break
-                    }
-                } else {
-                    val m1 = p1.matcher(dataList[0])
-                    while (m1.find()) {
-                        data = m1.group()
-                        break
-                    }
-                }
-                when {
-                    data.contains(")", true) -> {
-                        refNumber = "IMPS " + data.split(")")[0]
-                    }
-
-                    data.contains(".", true) -> {
-                        refNumber = "IMPS " + data.split(". ")[0]
-                    }
-
-                    else -> {
-                        refNumber = data
-                    }
-                }
+                val parts = body.split("IMPS")
+                val data = firstDigitsOnward(if (parts.size > 1) parts[1] else parts[0])
+                cutAtTerminator(data, ")" to ")", "." to ". ", prefix = "IMPS ")
             }
-
-
         } else if (body.contains("RefNo", true)) {
-            val dataList = body.split("RefNo")
-            val p1 = Pattern.compile("([0-9]+).*")
-            var data = ""
-            if (dataList.size == 2) {
-                val m1 = p1.matcher(dataList[1])
-                while (m1.find()) {
-                    data = m1.group()
-                    break
-                }
-            } else {
-                val m1 = p1.matcher(dataList[0])
-                while (m1.find()) {
-                    data = m1.group()
-                    break
-                }
-            }
-            when {
-                data.contains(")", true) -> {
-                    refNumber = "RefNo " + data.split(")")[0]
-                }
-
-                data.contains(".", true) -> {
-                    refNumber = "RefNo " + data.split(". ")[0]
-                }
-
-                data.contains("on", true) -> {
-                    refNumber = "RefNo " + data.lowercase(Locale.getDefault()).split(" on")[0]
-                }
-
-                data.contains("has", true) -> {
-                    refNumber = "RefNo " + data.lowercase(Locale.getDefault()).split(" has")[0]
-                }
-
-                else -> {
-                    refNumber = data
-                }
-            }
-
-        } else if (body.contains("Ref no", true)) {
-            if (body.contains("VPA", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split("vpa ")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                when {
-                    data.contains(".", true) -> {
-                        refNumber = "VPA " + data.split(". ")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        refNumber = "VPA " + data.split(")")[0]
-                    }
-
-                    data.contains("on", true) -> {
-                        refNumber = "VPA " + data.split(" on")[0]
-                    }
-
-                    data.contains("has", true) -> {
-                        refNumber = "VPA " + data.split(" has")[0]
-                    }
-
-                    else -> {
-                        refNumber = data
-                    }
-                }
-            } else {
-                val dataList = body.lowercase(Locale.getDefault()).split("ref no")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                when {
-                    data.contains(")", true) -> {
-                        refNumber = "Ref no" + data.split(")")[0]
-                    }
-
-                    data.contains(".", true) -> {
-                        refNumber = "Ref no" + data.split(". ")[0]
-                    }
-
-                    data.contains("on", true) -> {
-                        refNumber = "Ref no" + data.split(" on")[0]
-                    }
-
-                    data.contains("has", true) -> {
-                        refNumber = "Ref no" + data.split(" has")[0]
-                    }
-
-                    else -> {
-                        refNumber = data
-                    }
-                }
-            }
-
-
-        } else if (body.contains("Ref#", true)) {
-            val dataList = body.split("Ref#")
-            //val p1 = Pattern.compile("([0-9]+).*")
-            val data = if (dataList.size == 2) {
-                dataList[1]
-            } else {
-                dataList[0]
-            }
-            when {
-
-                data.replaceFirstChar { it.lowercase() }.contains("on", true) -> {
-                    refNumber = "Ref no" + data.split(" on")[0]
-                }
-
-                data.replaceFirstChar { it.lowercase() }.contains("has", true) -> {
-                    refNumber = "Ref no" + data.split(" has")[0]
-                }
-
-                data.contains(")", true) -> {
-                    refNumber = "Ref no" + data.split(")")[0]
-                }
-
-                data.contains(".", true) -> {
-                    refNumber = "Ref no" + data.split(".")[0]
-                }
-
-                else -> {
-                    refNumber = data
-                }
-            }
-        } else if (body.contains("Info", true)) {
-            val dataList = body.split("Info")
-            //val p1 = Pattern.compile("([0-9]+).*")
-            val data = if (dataList.size == 2) {
-                dataList[1]
-            } else {
-                dataList[0]
-            }
+            val parts = body.split("RefNo")
+            val data = firstDigitsOnward(if (parts.size == 2) parts[1] else parts[0])
             refNumber = when {
-                data.contains(")", true) -> {
-                    data.split(")")[0]
-                }
-
-                data.contains(".", true) -> {
-                    data.split(".")[0]
-                }
-
-                else -> {
-                    data
-                }
+                data.contains(")", true) -> "RefNo " + data.split(")")[0]
+                data.contains(".", true) -> "RefNo " + data.split(". ")[0]
+                data.contains("on", true) -> "RefNo " + data.lowercase(Locale.getDefault()).split(" on")[0]
+                data.contains("has", true) -> "RefNo " + data.lowercase(Locale.getDefault()).split(" has")[0]
+                else -> data
             }
+        } else if (body.contains("Ref no", true)) {
+            refNumber = if (body.contains("VPA", true)) {
+                val data = segmentAfter(body, "vpa ")
+                cutAtTerminator(data, "." to ". ", ")" to ")", "on" to " on", "has" to " has", prefix = "VPA ")
+            } else {
+                val data = segmentAfter(body, "ref no")
+                cutAtTerminator(data, ")" to ")", "." to ". ", "on" to " on", "has" to " has", prefix = "Ref no")
+            }
+        } else if (body.contains("Ref#", true)) {
+            val data = segmentAfter(body, "Ref#", lowercase = false, requireExactlyTwoParts = true)
+            refNumber = cutAtTerminator(data, "on" to " on", "has" to " has", ")" to ")", "." to ".", prefix = "Ref no")
+        } else if (body.contains("Info", true)) {
+            val data = segmentAfter(body, "Info", lowercase = false, requireExactlyTwoParts = true)
+            refNumber = cutAtTerminator(data, ")" to ")", "." to ".")
         } else if (body.contains("Received", true)) {
             if (body.contains("via", true)) {
-                val dataList = body.split("via")
-                //val p1 = Pattern.compile("([0-9]+).*")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                refNumber = "VIA " + when {
-                    data.replaceFirstChar { it.lowercase() }.contains("on", true) -> {
-                        data.split(" on")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        data.split(")")[0]
-                    }
-
-                    data.contains(". ", true) -> {
-                        data.split(".")[0]
-                    }
-
-                    else -> {
-                        data
-                    }
-                }
-
+                val data = segmentAfter(body, "via", lowercase = false)
+                refNumber = "VIA " + cutAtTerminator(data, "on" to " on", ")" to ")", ". " to ".")
             } else if (body.contains("has been", true)) {
-                val dataList = body.split("has ")
-                //val p1 = Pattern.compile("([0-9]+).*")
-                val data = if (dataList.size > 1) {
-                    dataList[2]
-                } else {
-                    dataList[0]
-                }
-                refNumber = when {
-                    data.replaceFirstChar { it.lowercase() }.contains(" on", true) -> {
-                        data.split("on")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        data.split(")")[0]
-                    }
-
-                    data.contains(". ", true) -> {
-                        data.split(".")[0]
-                    }
-
-                    else -> {
-                        data
-                    }
-                }
+                val parts = body.split("has ")
+                val data = if (parts.size > 1) parts[2] else parts[0]
+                refNumber = cutAtTerminator(data, " on" to "on", ")" to ")", ". " to ".")
             }
-
         } else if (body.contains("ATM", true)) {
             if (body.contains("txn#", true)) {
-                val dataList = body.split("ATM")
-                //val p1 = Pattern.compile("([0-9]+).*")
-                val data = if (dataList.size > 1) {
-                    if (dataList.size > 2) {
-                        dataList[2]
-                    } else {
-                        dataList[1]
-                    }
-                } else {
-                    dataList[0]
-                }
-                when {
-                    data.replaceFirstChar { it.lowercase() }.contains("fm", true) -> {
-                        refNumber = data.split("fm")[0]
-                    }
-
-                    data.replaceFirstChar { it.lowercase() }.contains("has", true) -> {
-                        refNumber = data.split(" has")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        refNumber = data.split(")")[0]
-                    }
-
-                    data.contains(".", true) -> {
-                        refNumber = data.split(". ")[0]
-                    }
-
-                    else -> {
-                        refNumber = data
-                    }
-                }
+                val parts = body.split("ATM")
+                val data = if (parts.size > 1) {
+                    if (parts.size > 2) parts[2] else parts[1]
+                } else parts[0]
+                refNumber = cutAtTerminator(data, "fm" to "fm", "has" to " has", ")" to ")", "." to ". ")
             } else if (body.contains("tx", true)) {
-                val dataList = body.split("tx#")
-                //val p1 = Pattern.compile("([0-9]+).*")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                when {
-                    data.replaceFirstChar { it.lowercase() }.contains("fm ", true) -> {
-                        refNumber = "ATM " + data.split("fm ")[0]
-                    }
-
-                    data.replaceFirstChar { it.lowercase() }.contains("for", true) -> {
-                        refNumber = "ATM " + data.split("for ")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        refNumber = "ATM " + data.split(")")[0]
-                    }
-
-                    data.contains(".", true) -> {
-                        refNumber = "ATM " + data.split(". ")[0]
-                    }
-
-                    data.contains("has", true) -> {
-                        refNumber = "ATM " + data.split(" has")[0]
-                    }
-
-                    else -> {
-                        refNumber = data
-                    }
-                }
+                val data = segmentAfter(body, "tx#", lowercase = false)
+                refNumber = cutAtTerminator(
+                    data, "fm " to "fm ", "for" to "for ", ")" to ")", "." to ". ", "has" to " has",
+                    prefix = "ATM "
+                )
             } else if (body.contains("withdrawn", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split("at ")
-                //val p1 = Pattern.compile("([0-9]+).*")
-                val data = if (dataList.size > 1) {
-                    if (dataList.size > 2) {
-                        dataList[2]
-                    } else {
-                        dataList[1]
-                    }
-                } else {
-                    dataList[0]
-                }
-                when {
-                    data.lowercase(Locale.getDefault()).contains("on", true) -> {
-                        refNumber = data.split(" on")[0]
-                    }
-
-                    data.lowercase(Locale.getDefault()).contains("has", true) -> {
-                        refNumber = data.split(" has")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        refNumber = data.split(")")[0]
-                    }
-
-                    data.contains(".", true) -> {
-                        refNumber = data.split(". ")[0]
-                    }
-
-                    else -> {
-                        refNumber = "ATM $data"
-                    }
-                }
-            } else if (body.contains("tx", true)) {
-                val dataList = body.split("tx#")
-                //val p1 = Pattern.compile("([0-9]+).*")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                when {
-                    data.contains("fm ", true) -> {
-                        refNumber = "ATM " + data.split("fm ")[0]
-                    }
-
-                    data.contains("for", true) -> {
-                        refNumber = "ATM " + data.split("for ")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        refNumber = "ATM ${data.split(")")[0]}"
-                    }
-
-                    data.contains(".", true) -> {
-                        refNumber = "ATM ${data.split(". ")[0]}"
-                    }
-
-                    data.contains("has", true) -> {
-                        refNumber = "ATM ${data.split(" has")[0]}"
-                    }
-
-                    else -> {
-                        refNumber = data
-                    }
+                val parts = body.lowercase(Locale.getDefault()).split("at ")
+                val data = if (parts.size > 1) {
+                    if (parts.size > 2) parts[2] else parts[1]
+                } else parts[0]
+                refNumber = when {
+                    data.lowercase(Locale.getDefault()).contains("on", true) -> data.split(" on")[0]
+                    data.lowercase(Locale.getDefault()).contains("has", true) -> data.split(" has")[0]
+                    data.contains(")", true) -> data.split(")")[0]
+                    data.contains(".", true) -> data.split(". ")[0]
+                    else -> "ATM $data"
                 }
             } else if (body.contains("has been", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split("by")
-                val data = if (dataList.size > 1) {
-                    dataList[1].trim()
-                } else {
-                    dataList[0].trim()
-                }
-                refNumber = when {
-                    data.contains(" on", true) -> {
-                        data.split(" on")[0]
-                    }
-
-                    data.contains(". ", true) -> {
-                        data.split(". ")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        data.split(")")[0]
-                    }
-
-                    else -> {
-                        data
-                    }
-                }
+                val data = segmentAfter(body, "by", trim = true)
+                refNumber = cutAtTerminator(data, " on" to " on", ". " to ". ", ")" to ")")
             }
-
         } else if (body.contains("by transfer", true)) {
-            if (body.contains("Deposit by", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split("deposit by ")
-                //val p1 = Pattern.compile("([0-9]+).*")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                refNumber = when {
-                    data.contains(" avl ", true) -> {
-                        data.split(" avl ")[0]
-                    }
-
-                    data.contains(".", true) -> {
-                        data.split(".")[0]
-                    }
-
-                    data.contains("-", true) -> {
-                        data.split("-")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        data.split(")")[0]
-                    }
-
-                    else -> {
-                        data
-                    }
-                }
+            refNumber = if (body.contains("Deposit by", true)) {
+                val data = segmentAfter(body, "deposit by ")
+                cutAtTerminator(data, " avl " to " avl ", "." to ".", "-" to "-", ")" to ")")
             } else {
-                refNumber = "Transfer"
+                "Transfer"
             }
         } else if (body.contains("for UPI", true)) {
-            val dataList = body.lowercase(Locale.getDefault()).split("upi-")
-            //val p1 = Pattern.compile("([0-9]+).*")
-            val data = if (dataList.size == 2) {
-                dataList[1]
-            } else {
-                dataList[0].trim()
-            }
-            refNumber = when {
-                data.contains(")", true) -> {
-                    data.split(")")[0]
-                }
-
-                data.contains(".", true) -> {
-                    data.split(". ")[0]
-                }
-
-                else -> {
-                    data
-                }
-            }
+            val parts = body.lowercase(Locale.getDefault()).split("upi-")
+            val data = if (parts.size == 2) parts[1] else parts[0].trim()
+            refNumber = cutAtTerminator(data, ")" to ")", "." to ". ")
         } else if (body.contains("Credit Card", true)) {
-            if (body.contains("Credit card ending", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split("from ")
-                //val p1 = Pattern.compile("([0-9]+).*")
-                val data = if (dataList.size > 1) {
-                    dataList[1].trim()
-                } else {
-                    dataList[0].trim()
-                }
-                when {
-                    data.contains("on", true) -> {
-                        refNumber = getFirstWord(data.split(" on")[0])
-                    }
-
-                    data.contains(")", true) -> {
-                        refNumber = getFirstWord(data.split(")")[0])
-                    }
-
-                    data.contains(".", true) -> {
-                        refNumber = getFirstWord(data.split(". ")[0])
-                    }
-
-                    else -> {
-                        refNumber = getFirstWord(data)
-                    }
-                }
-
-            } else if (body.contains("form", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split("from ")
-                //val p1 = Pattern.compile("([0-9]+).*")
-                val data = if (dataList.size == 2) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                when {
-                    data.contains("on", true) -> {
-                        refNumber = data.split(" on")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        refNumber = data.split(")")[0]
-                    }
-
-                    data.contains(".", true) -> {
-                        refNumber = data.split(". ")[0]
-                    }
-
-                    else -> {
-                        refNumber = data
-                    }
-                }
+            refNumber = if (body.contains("form", true)) {
+                val data = segmentAfter(body, "from ", requireExactlyTwoParts = true)
+                cutAtTerminator(data, "on" to " on", ")" to ")", "." to ". ")
             } else if (body.contains("spent", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split("at ")
-                //val p1 = Pattern.compile("([0-9]+).*")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                when {
-                    data.contains(" on ", true) -> {
-                        refNumber = data.split(" on ")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        refNumber = data.split(")")[0]
-                    }
-
-                    data.contains(".", true) -> {
-                        refNumber = data.split(".")[0]
-                    }
-
-                    else -> {
-                        refNumber = data
-                    }
-                }
+                val data = segmentAfter(body, "at ")
+                cutAtTerminator(data, " on " to " on ", ")" to ")", "." to ".")
             } else {
-                val dataList = body.lowercase(Locale.getDefault()).split("at")
-                //val p1 = Pattern.compile("([0-9]+).*")
-                val data = if (dataList.size > 1) {
-                    dataList[1]
-                } else {
-                    dataList[0]
-                }
-                when {
-                    data.contains(" on ", true) -> {
-                        refNumber = data.split(" on ")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        refNumber = data.split(")")[0]
-                    }
-
-                    data.contains(".", true) -> {
-                        refNumber = data.split(". ")[0]
-                    }
-
-                    else -> {
-                        refNumber = data
-                    }
-                }
+                val data = segmentAfter(body, "at")
+                cutAtTerminator(data, " on " to " on ", ")" to ")", "." to ". ")
             }
-
         } else if (body.contains("payment", true) && !body.contains("spent", true)) {
-            val dataList = body.lowercase(Locale.getDefault()).split("for")
-            //val p1 = Pattern.compile("([0-9]+).*")
-            val data = if (dataList.size > 1) {
-                dataList[1].trim()
-            } else {
-                dataList[0].trim()
-            }
-            refNumber = when {
-                data.contains("-", true) -> {
-                    data.split("-")[0]
-                }
-
-                data.contains(")", true) -> {
-                    data.split(")")[0]
-                }
-
-                data.contains(".", true) -> {
-                    data.split(".")[0]
-                }
-
-                else -> {
-                    data
-                }
-            }
+            val data = segmentAfter(body, "for", trim = true)
+            refNumber = cutAtTerminator(data, "-" to "-", ")" to ")", "." to ".")
         } else if (body.contains("spent", true)) {
-            val dataList = body.lowercase(Locale.getDefault()).split(" at ")
-            //val p1 = Pattern.compile("([0-9]+).*")
-            val data = if (dataList.size > 1) {
-                dataList[1].trim()
+            val data = segmentAfter(body, " at ", trim = true)
+            refNumber = cutAtTerminator(data, " on " to " on ", "." to ". ", ")" to ")")
+        } else if (body.contains("cheque Number", true) || body.contains("cheque No", true)) {
+            refNumber = if (body.contains("cheque No", true)) {
+                val data = segmentAfter(body, "cheque no ", requireExactlyTwoParts = true, trim = true)
+                val temp = cutAtTerminator(data, "." to ".", "-" to "-", ")" to ")")
+                "Cheque No " + getFirstWord(temp.trim())
             } else {
-                dataList[0].trim()
+                val data = segmentAfter(body, "cheque number ", requireExactlyTwoParts = true, trim = true)
+                cutAtTerminator(data, "." to ".", "-" to "-", ")" to ")")
             }
-            when {
-                data.contains(" on ", true) -> {
-                    refNumber = data.split(" on ")[0]
-                }
-
-                data.contains(".", true) -> {
-                    refNumber = data.split(". ")[0]
-                }
-
-                data.contains(")", true) -> {
-                    refNumber = data.split(")")[0]
-                }
-
-                else -> {
-                    refNumber = data
-                }
-            }
-        } else if (body.contains("cheque Number", true)
-            || body.contains("cheque No", true)
-        ) {
-            if (body.contains("cheque No", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split("cheque no ")
-                //val p1 = Pattern.compile("([0-9]+).*")
-                val data = if (dataList.size == 2) {
-                    dataList[1].trim()
-                } else {
-                    dataList[0].trim()
-                }
-                val temp = when {
-                    data.contains(".", true) -> {
-                        data.split(".")[0]
-                    }
-
-                    data.contains("-", true) -> {
-                        data.split("-")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        data.split(")")[0]
-                    }
-
-                    else -> {
-                        data
-                    }
-                }
-                refNumber = "Cheque No " + getFirstWord(temp.trim())
-            } else if (body.contains("cheque Number", true)) {
-                val dataList = body.lowercase(Locale.getDefault()).split("cheque number ")
-                //val p1 = Pattern.compile("([0-9]+).*")
-                val data = if (dataList.size == 2) {
-                    dataList[1].trim()
-                } else {
-                    dataList[0].trim()
-                }
-                when {
-                    data.contains(".", true) -> {
-                        refNumber = data.split(".")[0]
-                    }
-
-                    data.contains("-", true) -> {
-                        refNumber = data.split("-")[0]
-                    }
-
-                    data.contains(")", true) -> {
-                        refNumber = data.split(")")[0]
-                    }
-
-                    else -> {
-                        refNumber = data
-                    }
-                }
-            }
-
-
         } else if (body.contains("credit for", true)) {
-            val dataList = body.lowercase(Locale.getDefault()).split("credit for ")
-            //val p1 = Pattern.compile("([0-9]+).*")
-            val data = if (dataList.size == 2) {
-                dataList[1].trim()
-            } else {
-                dataList[0].trim()
-            }
-            refNumber = "Credit " + when {
-                data.contains(" of ", true) -> {
-                    data.split(" of ")[0]
-                }
-
-                data.contains(".", true) -> {
-                    data.split(".")[0]
-                }
-
-                data.contains("-", true) -> {
-                    data.split("-")[0]
-                }
-
-                data.contains(")", true) -> {
-                    data.split(")")[0]
-                }
-
-                else -> {
-                    data
-                }
-            }
+            val data = segmentAfter(body, "credit for ", requireExactlyTwoParts = true, trim = true)
+            refNumber = "Credit " + cutAtTerminator(data, " of " to " of ", "." to ".", "-" to "-", ")" to ")")
         } else if (body.contains("Deposit by ", true)) {
-            val dataList = body.lowercase(Locale.getDefault()).split("Deposit by ")
-            //val p1 = Pattern.compile("([0-9]+).*")
-            val data = if (dataList.size > 1) {
-                dataList[1].trim()
-            } else {
-                dataList[0].trim()
-            }
-            refNumber = when {
-                data.contains(" avl ", true) -> {
-                    data.split(" of ")[0]
-                }
-
-                data.contains(".", true) -> {
-                    data.split(".")[0]
-                }
-
-                data.contains("-", true) -> {
-                    data.split("-")[0]
-                }
-
-                data.contains(")", true) -> {
-                    data.split(")")[0]
-                }
-
-                else -> {
-                    data
-                }
-            }
+            val data = segmentAfter(body, "Deposit by ", trim = true)
+            refNumber = cutAtTerminator(data, " avl " to " of ", "." to ".", "-" to "-", ")" to ")")
         } else if (body.contains("ref", true)) {
-            val dataList = body.lowercase(Locale.getDefault()).split("ref")
-            //val p1 = Pattern.compile("([0-9]+).*")
-            val data = if (dataList.size > 1) {
-                dataList[1].trim()
-            } else {
-                dataList[0]
-            }
-
+            val parts = body.lowercase(Locale.getDefault()).split("ref")
+            val data = if (parts.size > 1) parts[1].trim() else parts[0]
             refNumber = "Ref " + getFirstWord(data)
         } else if (body.contains("cheque of", true)) {
-            val dataList = body.lowercase(Locale.getDefault()).split("cheque of ")
-
             refNumber = "Cheque"
         } else if (body.contains("UPI", true)) {
-            val dataList = body.lowercase(Locale.getDefault()).split("upi")
-            //val p1 = Pattern.compile("([0-9]+).*")
-            val data = if (dataList.size > 1) {
-                dataList[1].trim()
-            } else {
-                dataList[0].trim()
-            }
-            refNumber = "UPI" + when {
-                data.contains(".", true) -> {
-                    data.split(".")[0]
-                }
-
-                data.contains("-", true) -> {
-                    data.split("-")[0]
-                }
-
-                data.contains(")", true) -> {
-                    data.split(")")[0]
-                }
-
-                else -> {
-                    data
-                }
-            }
+            val data = segmentAfter(body, "upi", trim = true)
+            refNumber = "UPI" + cutAtTerminator(data, "." to ".", "-" to "-", ")" to ")")
         } else if (body.contains("Credited", true)) {
-            val dataList = body.lowercase(Locale.getDefault()).split(" account of ")
-            //val p1 = Pattern.compile("([0-9]+).*")
-            val data = if (dataList.size > 1) {
-                dataList[1].trim()
-            } else {
-                dataList[0].trim()
-            }
-            refNumber = "Credited:" + when {
-                data.contains("a/c", true) -> {
-                    data.split("a/c")[0]
-                }
-
-                data.contains(".", true) -> {
-                    data.split(".")[0]
-                }
-
-                data.contains("-", true) -> {
-                    data.split("-")[0]
-                }
-
-                data.contains(")", true) -> {
-                    data.split(")")[0]
-                }
-
-                else -> {
-                    data
-                }
-            }
+            val data = segmentAfter(body, " account of ", trim = true)
+            refNumber = "Credited:" + cutAtTerminator(data, "a/c" to "a/c", "." to ".", "-" to "-", ")" to ")")
         } else if (body.contains("deducted", true)) {
-            val dataList = body.lowercase(Locale.getDefault()).split(" for ")
-            //val p1 = Pattern.compile("([0-9]+).*")
-            val data = if (dataList.size > 1) {
-                dataList[1].trim()
-            } else {
-                dataList[0].trim()
-            }
-            refNumber = "Credited:" + when {
-                data.contains("a/c", true) -> {
-                    data.split("a/c")[0]
-                }
-
-                data.contains(".", true) -> {
-                    data.split(".")[0]
-                }
-
-                data.contains("-", true) -> {
-                    data.split("-")[0]
-                }
-
-                data.contains(")", true) -> {
-                    data.split(")")[0]
-                }
-
-                else -> {
-                    data
-                }
-            }
+            val data = segmentAfter(body, " for ", trim = true)
+            refNumber = "Credited:" + cutAtTerminator(data, "a/c" to "a/c", "." to ".", "-" to "-", ")" to ")")
         }
-
-        // var dataList = smsDto.body.split("Ref")
 
         return refNumber
 

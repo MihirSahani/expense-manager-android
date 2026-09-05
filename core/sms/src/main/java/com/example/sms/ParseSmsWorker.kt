@@ -9,6 +9,10 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
+/**
+ * WorkManager worker that parses transactions out of the SMS messages carried by [intent]
+ * (typically an `SMS_RECEIVED` broadcast) and persists them via [smsParser].
+ */
 @HiltWorker
 class ParseSmsWorker @AssistedInject constructor(
     @Assisted context: Context,
@@ -17,6 +21,11 @@ class ParseSmsWorker @AssistedInject constructor(
     private val intent: Intent
 ) : CoroutineWorker(context, workerParams) {
 
+    /**
+     * Extracts SMS messages from [intent] and saves any transactions found in them.
+     *
+     * @return [Result.success] once transactions are saved, or [Result.retry] if an error occurs.
+     */
     override suspend fun doWork(): Result {
         return try {
             val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
