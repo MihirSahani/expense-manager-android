@@ -10,10 +10,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
+/** Exposes the account list and aggregate net worth for the accounts overview screen. */
 @HiltViewModel
 class AccountsViewModel @Inject constructor(
     private val repo: AccountRepository,
 ) : ViewModel() {
+    /** All accounts, kept warm for 5s after the last subscriber unsubscribes. */
     val accounts = repo.accounts
         .stateIn(
             viewModelScope,
@@ -21,6 +23,7 @@ class AccountsViewModel @Inject constructor(
             emptyList()
         )
 
+    /** Sum of every account's balance. */
     val netWorth: Flow<Long> = repo.accounts
         .map { accounts -> accounts.sumOf { it.balance } }
         .stateIn(

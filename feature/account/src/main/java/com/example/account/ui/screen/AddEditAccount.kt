@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -44,22 +47,22 @@ fun AddEditAccountScreen(
     vm: AccountViewModel = hiltViewModel()
 ) {
     val account by vm.account.collectAsStateWithLifecycle()
+    val saveError by vm.saveError.collectAsStateWithLifecycle()
+    val isSaving by vm.isSaving.collectAsStateWithLifecycle()
 
     AddEditAccountContent(
         account = account,
+        accountNumberError = saveError,
+        isSaving = isSaving,
+        onAccountNumberEdited = vm::clearSaveError,
         onIconButtonClick = { account ->
             if (!vm.isNewAccount()) {
                 vm.deleteAccount(account!!.id)
+                afterSave()
             }
         },
-        onSave = { account ->
-            if (vm.isNewAccount()) {
-                vm.createAccount(account)
-            }
-            else {
-                vm.updateAccount(account)
-            }
-            afterSave()
+        onSave = { account, updateBalance ->
+            vm.saveAccount(account, updateBalance, afterSave)
         }
     )
 }
@@ -67,8 +70,11 @@ fun AddEditAccountScreen(
 @Composable
 fun AddEditAccountContent(
     account: Account?,
+    accountNumberError: String? = null,
+    isSaving: Boolean = false,
+    onAccountNumberEdited: () -> Unit = {},
     onIconButtonClick: (Account?) -> Unit,
-    onSave: (Account) -> Unit
+    onSave: (Account, updateBalance: Boolean) -> Unit
 ) {
     ScreenScaffold(
         "Add Account",
@@ -85,6 +91,7 @@ fun AddEditAccountContent(
 
         var name by remember { mutableStateOf(account.name) }
         var balanceText by remember { mutableStateOf(account.balance.toDouble().div(100).toString()) }
+        var balanceEdited by remember { mutableStateOf(false) }
 
         var type by remember { mutableStateOf(account.type) } // drop down
         var accountNumber by remember { mutableStateOf(account.accountNumber) }
@@ -93,6 +100,15 @@ fun AddEditAccountContent(
         var color by remember { mutableStateOf(account.color) } // drop down
 
         var showDialog by remember { mutableStateOf(false) }
+
+        // If the balance is updated from outside (e.g., from the database),
+        // we want to update the balanceText only if the user hasn't edited it yet.
+        // This prevents overwriting user input while they are typing.
+        LaunchedEffect(account.balance) {
+            if (!balanceEdited) {
+                balanceText = account.balance.toDouble().div(100).toString()
+            }
+        }
 
         ListWrapper(paddingValues) {
 
@@ -113,7 +129,10 @@ fun AddEditAccountContent(
 
             MyInput.TextField(
                 balanceText,
-                { balanceText = it },
+                {
+                    balanceText = it
+                    balanceEdited = true
+                },
                 "Balance",
             )
 
@@ -121,8 +140,14 @@ fun AddEditAccountContent(
 
             MyInput.TextField(
                 accountNumber ?: "",
-                { accountNumber = it },
-                "Account Number (Last 4 digits)",
+                {
+                    accountNumber = it
+                    onAccountNumberEdited()
+                },
+                "Account Number (SMS digits)",
+                isError = accountNumberError != null,
+                errorMessage = accountNumberError.orEmpty(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
 
             SingleRowItem(modifier = Modifier.clickable { showDialog = true }) {
@@ -144,15 +169,20 @@ fun AddEditAccountContent(
             MyInput.Button(
                 text = "Save",
                 onClick = {
-                    account.name = name
-                    account.balance = balanceText.toDoubleOrNull()?.times(100)?.toLong() ?: 0L
-                    account.type = type
-                    account.accountNumber = accountNumber
-                    account.icon = icon
-                    account.color = color
-                    onSave(account)
+                    onSave(
+                        account.copy(
+                            name = name,
+                            balance = balanceText.toDoubleOrNull()?.times(100)?.toLong() ?: 0L,
+                            type = type,
+                            accountNumber = accountNumber,
+                            icon = icon,
+                            color = color
+                        ),
+                        balanceEdited
+                    )
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isSaving
             )
         }
     }
@@ -173,7 +203,7 @@ fun AddEditAccountContentPreview() {
                 icon = AccountIcon.SAVINGS
             ),
             onIconButtonClick = {},
-            onSave = {}
+            onSave = { _, _ -> }
         )
     }
 }
@@ -193,7 +223,7 @@ fun AddEditAccountContentPreviewDark() {
                 icon = AccountIcon.SAVINGS
             ),
             onIconButtonClick = {},
-            onSave = {}
+            onSave = { _, _ -> }
         )
     }
 }
