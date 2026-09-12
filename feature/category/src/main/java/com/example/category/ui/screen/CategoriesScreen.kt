@@ -1,7 +1,12 @@
 package com.example.category.ui.screen
 
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ManageSearch
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -19,22 +24,34 @@ import com.example.core.database.projection.CategoryWithInfo
 @Composable
 fun CategoriesScreen(
     onCategoryClick: (Int) -> Unit,
+    onDiscoverPayeesClick: () -> Unit,
     viewmodel: CategoriesViewModel = hiltViewModel()
 ) {
     val categoriesWithInfo by viewmodel.categoriesWithInfo.collectAsStateWithLifecycle(emptyList())
 
     CategoriesContent(
         categoriesWithInfo = categoriesWithInfo,
-        onClick = onCategoryClick
+        onClick = onCategoryClick,
+        onDiscoverPayeesClick = onDiscoverPayeesClick
     )
 }
 
 @Composable
 fun CategoriesContent(
     categoriesWithInfo: List<CategoryWithInfo>,
-    onClick: (Int) -> Unit
+    onClick: (Int) -> Unit,
+    onDiscoverPayeesClick: () -> Unit
 ) {
-    ScreenScaffold("Categories") { paddingValues ->
+    ScreenScaffold(
+        title = "Categories",
+        icon = {
+            Icon(
+                Icons.Filled.ManageSearch,
+                contentDescription = "Categorize Payees",
+                modifier = Modifier.clickable { onDiscoverPayeesClick() }
+            )
+        }
+    ) { paddingValues ->
         ListWrapper(paddingValues) {
             LazyListOfItems(categoriesWithInfo) { categoryWithInfo ->
                 CategoryItem(
@@ -59,7 +76,8 @@ fun CategoriesContentPreview() {
     FinancesTheme {
         CategoriesContent(
             categoriesWithInfo = sampleCategories,
-            onClick = {}
+            onClick = {},
+            onDiscoverPayeesClick = {}
         )
     }
 }
@@ -77,7 +95,8 @@ fun CategoriesContentPreviewDark() {
     FinancesTheme(darkTheme = true) {
         CategoriesContent(
             categoriesWithInfo = sampleCategories,
-            onClick = {}
+            onClick = {},
+            onDiscoverPayeesClick = {}
         )
     }
 }
