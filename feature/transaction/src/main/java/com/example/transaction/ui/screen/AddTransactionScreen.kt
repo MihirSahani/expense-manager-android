@@ -35,6 +35,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.common.ui.component.IconAndRow
+import com.example.common.ui.component.PickerDialog
 import com.example.common.ui.component.ScreenScaffold
 import com.example.common.ui.component.SingleRowItem
 import com.example.common.ui.theme.FinancesTheme
@@ -49,7 +51,6 @@ import com.example.core.database.models.AccountType
 import com.example.core.database.models.CategoryIcon
 import com.example.core.database.models.CategoryType
 import com.example.core.database.models.TransactionType
-import com.example.transaction.ui.components.SimpleDialog
 import com.example.transaction.ui.viewmodel.TransactionViewModel
 
 @Composable
@@ -200,7 +201,7 @@ fun AddTransactionContent(
                         amount = amount.toLong()*100,
                         categoryId = selectedCategory?.id,
                         datetime = transactionDate,
-                        rawAccountNo = selectedAccount?.name ?: "",
+                        rawAccountNo = selectedAccount?.accountNumber,
                         accountId = selectedAccount?.id,
                         payee = payee,
                         transactionType = transactionType,
@@ -220,26 +221,38 @@ fun AddTransactionContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (showCategoryDialog) {
-                SimpleDialog(
+                PickerDialog(
                     title = "Select Category",
-                    items = categories.map { Triple(it.icon.imageVector, it.name, it.color) },
-                    onItemSelected = { index ->
-                        selectedCategory = categories[index]
+                    show = true,
+                    items = categories,
+                    onDismiss = { showCategoryDialog = false },
+                    onItemSelected = { category ->
+                        selectedCategory = category
                         showCategoryDialog = false
                     },
-                    onDismiss = { showCategoryDialog = false }
+                    itemContent = { category ->
+                        IconAndRow(category.icon.imageVector, category.color) {
+                            MyText.RowHeader(category.name)
+                        }
+                    }
                 )
             }
 
             if (showAccountDialog) {
-                SimpleDialog(
+                PickerDialog(
                     title = "Select Account",
-                    items = accounts.map { Triple(it.icon.imageVector, it.name, it.color) },
-                    onItemSelected = { index ->
-                        selectedAccount = accounts[index]
+                    show = true,
+                    items = accounts,
+                    onDismiss = { showAccountDialog = false },
+                    onItemSelected = { account ->
+                        selectedAccount = account
                         showAccountDialog = false
                     },
-                    onDismiss = { showAccountDialog = false }
+                    itemContent = { account ->
+                        IconAndRow(account.icon.imageVector, account.color) {
+                            MyText.RowHeader(account.name)
+                        }
+                    }
                 )
             }
 

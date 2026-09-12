@@ -18,22 +18,32 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 
+/**
+ * Exposes the transaction history for the current or past cycle as a paged, date-grouped list,
+ * for the transaction history screen.
+ */
 @HiltViewModel
 class TransactionsHistoryViewModel @Inject constructor(private val repo: TransactionRepository) : ViewModel() {
     private val _showPastCycle = MutableStateFlow(false)
+    /** Whether the history is currently showing the past cycle rather than the current one. */
     val showPastCycle: StateFlow<Boolean> = _showPastCycle.asStateFlow()
 
+    /** Toggles between showing the current cycle and the past cycle. */
     fun toggleCycle() {
         _showPastCycle.value = !_showPastCycle.value
     }
 
+    /**
+     * Paged transaction list for the selected cycle (see [showPastCycle]), with date-header
+     * separators inserted between days, cached in [viewModelScope].
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
     val transactions: Flow<PagingData<TransactionListItem>> = _showPastCycle
         .flatMapLatest { showPast ->
             if (showPast) {
                 repo.getPastCycleTransactionsWithCategory()
             } else {
-                repo.getCurrentCycleTransactions()
+                repo.getCurrentCycleTransactionsWithCategory()
             }
         }
         .map { pagingData ->

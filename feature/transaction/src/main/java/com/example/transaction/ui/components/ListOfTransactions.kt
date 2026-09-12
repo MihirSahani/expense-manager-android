@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
+import com.example.common.ui.component.Date
 import com.example.common.ui.theme.FinancesTheme
 import com.example.core.database.models.CategoryIcon
 import com.example.core.database.models.TransactionType

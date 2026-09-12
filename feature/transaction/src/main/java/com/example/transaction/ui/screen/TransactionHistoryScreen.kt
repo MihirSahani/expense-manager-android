@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.common.ui.component.PreviewPagingData
 import com.example.common.ui.component.ScreenScaffold
 import com.example.common.ui.theme.FinancesTheme
 import com.example.core.database.models.CategoryIcon
@@ -48,7 +49,8 @@ fun TransactionHistoryScreen(
                     )
                 }
             }
-        }
+        },
+        title = if (showPastCycle) "Archived Transactions" else "Transaction History"
     )
 }
 
@@ -57,9 +59,10 @@ fun TransactionHistoryScreen(
     items: LazyPagingItems<TransactionListItem>,
     icon : @Composable () -> Unit = {},
     onTransactionClick: (Int) -> Unit,
+    title: String = "Transaction History"
 ) {
     ScreenScaffold (
-        title = "Transaction History",
+        title = title,
         icon = icon
     ) { padding ->
         ListOfTransactions(

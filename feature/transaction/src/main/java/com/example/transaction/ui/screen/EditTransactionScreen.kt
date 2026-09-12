@@ -76,7 +76,7 @@ fun EditTransactionContent(
     accounts: List<Account>,
     categories: List<Category>,
     onAccountUpdate: (Transaction) -> Unit,
-    onCategoryUpdate: (Int?, Boolean) -> Unit,
+    onCategoryUpdate: (Int, Boolean) -> Unit,
     onTopIconClick: () -> Unit,
     padding: PaddingValues
 ) {
