@@ -18,13 +18,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.common.ui.component.ItemAndDivider
 import com.example.common.ui.component.ListOfItems
 import com.example.common.ui.component.ListWrapper
+import com.example.common.ui.component.PickerDialog
 import com.example.common.ui.component.ScreenScaffold
 import com.example.common.ui.theme.FinancesTheme
 import com.example.common.utils.MyText
 import com.example.common.utils.toDateTimeString
 import com.example.datastore.model.Currency
 import com.example.datastore.model.CycleType
-import com.example.setting.ui.component.SimpleDialog
 import com.example.setting.ui.viewmodel.SettingViewModel
 import kotlin.time.Clock
 
@@ -64,20 +64,20 @@ private fun SettingsScreenContent(
     var showCycleTypeDialog by remember { mutableStateOf(false) }
     var showCurrencyDialog by remember { mutableStateOf(false) }
 
-    SimpleDialog(
-        "Cycle Type",
-        showCycleTypeDialog,
-        CycleType.entries.toList(),
-        { showCycleTypeDialog = false },
-        { onCycleTypeUpdate(it); showCycleTypeDialog = false }
+    PickerDialog(
+        title = "Cycle Type",
+        show = showCycleTypeDialog,
+        items = CycleType.entries.toList(),
+        onDismiss = { showCycleTypeDialog = false },
+        onItemSelected = { onCycleTypeUpdate(it); showCycleTypeDialog = false }
     )
 
-    SimpleDialog(
-        "Currency",
-        showCurrencyDialog,
-        Currency.entries.toList(),
-        { showCurrencyDialog = false },
-        { onCurrencyUpdate(it); showCurrencyDialog = false }
+    PickerDialog(
+        title = "Currency",
+        show = showCurrencyDialog,
+        items = Currency.entries.toList(),
+        onDismiss = { showCurrencyDialog = false },
+        onItemSelected = { onCurrencyUpdate(it); showCurrencyDialog = false }
     )
 
     ScreenScaffold("Settings") { padding ->
