@@ -27,7 +27,11 @@ import com.example.common.utils.MyInput
 import com.example.login.ui.viewmodel.LoginViewModel
 
 @Composable
-fun LoginScreen(navigateToHome: () -> Unit, vm: LoginViewModel = hiltViewModel()) {
+fun LoginScreen(
+    navigateToHome: () -> Unit,
+    navigateToAccountDiscovery: () -> Unit,
+    vm: LoginViewModel = hiltViewModel()
+) {
     val isReadingSms by vm.isReadingSms.collectAsStateWithLifecycle(initialValue = true)
     val isUserSetupDone by vm.isUserSetupDone.collectAsStateWithLifecycle(initialValue = false)
     val isOnboardingDone by vm.isOnboardingDone.collectAsStateWithLifecycle(initialValue = false)
@@ -37,7 +41,7 @@ fun LoginScreen(navigateToHome: () -> Unit, vm: LoginViewModel = hiltViewModel()
     }
 
     LaunchedEffect(isUserSetupDone, isReadingSms) {
-        if (isUserSetupDone && !isReadingSms) vm.completeOnboarding()
+        if (isUserSetupDone && !isReadingSms) navigateToAccountDiscovery()
     }
 
     if (isUserSetupDone) {

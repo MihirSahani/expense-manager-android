@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material3.Icon
@@ -23,12 +24,17 @@ import com.example.common.ui.theme.FinancesTheme
 import com.example.common.utils.MyText
 
 @Composable
-fun HomeScreen(navigateToAccounts: () -> Unit, navigateToCategories: () -> Unit, vm: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(
+    navigateToAccounts: () -> Unit,
+    navigateToCategories: () -> Unit,
+    navigateToLoans: () -> Unit,
+    vm: HomeViewModel = hiltViewModel()
+) {
     LaunchedEffect(Unit) {
         vm.refreshSalaryCreditTime()
     }
     val netWorth by vm.netWorth.collectAsStateWithLifecycle(0L)
-    HomeContent(netWorth, navigateToAccounts, navigateToCategories)
+    HomeContent(netWorth, navigateToAccounts, navigateToCategories, navigateToLoans)
 }
 
 @Composable
@@ -36,6 +42,7 @@ fun HomeContent(
     netWorth: Long,
     navigateToAccounts: () -> Unit = {},
     navigateToCategories: () -> Unit = {},
+    navigateToLoans: () -> Unit = {},
 ) {
     ScreenScaffold("Home") { paddingValues ->
         ListWrapper(paddingValues) {
@@ -44,7 +51,7 @@ fun HomeContent(
 
             Row(
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 SingleRowItem(Modifier
@@ -68,6 +75,25 @@ fun HomeContent(
                     )
                 }
             }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                SingleRowItem(Modifier
+                    .weight(1f)
+                    .clickable { navigateToLoans() }
+                ) {
+                    MyText.RowHeader("Loans")
+                    Icon(
+                        imageVector = Icons.Default.ArrowOutward,
+                        contentDescription = "Link",
+                    )
+                }
+                Row(Modifier.weight(1f)) { }
+            }
+
         }
     }
 }

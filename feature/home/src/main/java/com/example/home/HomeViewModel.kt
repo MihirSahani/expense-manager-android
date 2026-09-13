@@ -12,12 +12,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/** Exposes aggregate net worth and salary-cycle refresh for the home screen. */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     repo: AccountRepository,
     private val transactionRepo: TransactionRepository
 ): ViewModel() {
 
+    /** Sum of every account's balance. */
     val netWorth: Flow<Long> = repo.accounts
         .map { accounts -> accounts.sumOf { it.balance } }
         .stateIn(
@@ -26,6 +28,7 @@ class HomeViewModel @Inject constructor(
             0L
         )
 
+    /** Refreshes the persisted salary credit time from the latest income transaction. */
     fun refreshSalaryCreditTime() {
         viewModelScope.launch {
             transactionRepo.updateSalaryCreditTime()
