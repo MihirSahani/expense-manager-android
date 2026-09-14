@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -33,8 +32,11 @@ import com.patrykandpatrick.vico.compose.pie.PieSize
 import com.patrykandpatrick.vico.compose.pie.data.PieChartModel
 import com.patrykandpatrick.vico.compose.pie.rememberPieChart
 
+private val pieToMetaSpacing = 8.dp
+private val legendRowSpacing = 6.dp
+
 @Composable
-fun SpendingDonutChart(state: AnalysisUiState) {
+fun SpendingDonutChart(state: AnalysisUiState, modifier: Modifier = Modifier) {
     val necessitiesColor = MaterialTheme.colorScheme.primary
     val disposablesColor = MaterialTheme.colorScheme.secondary
     val investmentsColor = MaterialTheme.colorScheme.tertiary
@@ -53,43 +55,40 @@ fun SpendingDonutChart(state: AnalysisUiState) {
 
     val model = remember(state) {
         PieChartModel.build(
-            state.necessities.spent.toFloat(),
-            state.disposables.spent.toFloat(),
-            state.investments.spent.toFloat()
+            state.necessities.spent.coerceAtLeast(0L).toFloat(),
+            state.disposables.spent.coerceAtLeast(0L).toFloat(),
+            state.investments.spent.coerceAtLeast(0L).toFloat()
         )
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         PieChartHost(
-            modifier = Modifier.size(140.dp),
+            modifier = Modifier.size(96.dp),
             chart = pieChart,
             model = model
         )
 
-        Column(modifier = Modifier.weight(1f)) {
-            MyText.RowBody("Total Spent")
-            MyText.TransactionAmount(
-                amount = state.totalSpent,
-                fontSize = 26.sp,
-                color = MaterialTheme.colorScheme.primary
-            )
+        Spacer(modifier = Modifier.height(pieToMetaSpacing))
 
-            Spacer(modifier = Modifier.height(12.dp))
+        MyText.RowBody("Total Spent")
+        MyText.TransactionAmount(
+            amount = state.totalSpent,
+            fontSize = 20.sp,
+            color = MaterialTheme.colorScheme.primary
+        )
 
-            DonutLegend(
-                listOf(
-                    LegendItem("Necessities", necessitiesColor, state.necessities.spent),
-                    LegendItem("Disposables", disposablesColor, state.disposables.spent),
-                    LegendItem("Investments", investmentsColor, state.investments.spent)
-                )
+        Spacer(modifier = Modifier.height(pieToMetaSpacing))
+
+        DonutLegend(
+            listOf(
+                LegendItem("Necessities", necessitiesColor, state.necessities.spent),
+                LegendItem("Disposables", disposablesColor, state.disposables.spent),
+                LegendItem("Investments", investmentsColor, state.investments.spent)
             )
-        }
+        )
     }
 }
 
@@ -97,7 +96,7 @@ data class LegendItem(val label: String, val color: Color, val amount: Long)
 
 @Composable
 fun DonutLegend(items: List<LegendItem>) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(legendRowSpacing)) {
         items.forEach { item ->
             Row(
                 modifier = Modifier.fillMaxWidth(),

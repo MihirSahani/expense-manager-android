@@ -1,18 +1,18 @@
 package com.example.analysis.ui.components
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -34,11 +34,17 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
-import kotlin.collections.first
 import androidx.compose.ui.platform.LocalLocale
 
+private val dayLabelWidth = 14.dp
+private val cellSpacing = 3.dp
+private val headerHeight = 14.dp
+private const val heatmapRows = 7
+private val heatmapTitleSpacing = 6.dp
+
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-fun SpendingHeatmap(days: List<HeatmapDay>, cycleStart: LocalDate, cycleEnd: LocalDate) {
+fun SpendingHeatmap(days: List<HeatmapDay>, cycleStart: LocalDate, cycleEnd: LocalDate, modifier: Modifier = Modifier) {
     val spentByDate = remember(days) { days.associate { it.date to it.spent } }
     val maxSpent = remember(days) {
         days.maxOfOrNull { it.spent }?.coerceAtLeast(1L) ?: 1L
@@ -51,56 +57,59 @@ fun SpendingHeatmap(days: List<HeatmapDay>, cycleStart: LocalDate, cycleEnd: Loc
         (ChronoUnit.DAYS.between(rangeStart, rangeEnd).toInt() + 1).coerceAtLeast(1)
     }
     val weekColumns = remember(rangeStart, totalDays) {
-        (0 until totalDays).map { rangeStart.plusDays(it.toLong()) }.chunked(7)
+        (0 until totalDays).map { rangeStart.plusDays(it.toLong()) }.chunked(heatmapRows)
     }
 
     val baseColor = MaterialTheme.colorScheme.primary
     val refundColor = MaterialTheme.colorScheme.tertiary
     val emptyColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(heatmapTitleSpacing)) {
         MyText.SecondaryHeader("Daily Spending")
 
-        val scrollState = rememberScrollState()
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val cellSize = 24.dp
+            val rowWidth = (cellSize * weekColumns.size) + (cellSpacing * (weekColumns.size - 1))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Column {
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Spacer(modifier = Modifier.width(20.dp))
-                    weekColumns.forEachIndexed { index, week ->
-                        val firstDay = week.first()
-                        val showLabel = index == 0 ||
-                                firstDay.month != weekColumns[index - 1].first().month
-                        Box(modifier = Modifier.width(32.dp).height(16.dp), contentAlignment = Alignment.Center) {
-                            if (showLabel) {
-                                MyText.RowBody(
-                                    text = firstDay.month
-                                        .getDisplayName(TextStyle.SHORT, LocalLocale.current.platformLocale),
-                                    fontSize = 9.sp,
-                                    modifier = Modifier.align(Alignment.Center)
-                                )
+                Row(modifier = Modifier.width(dayLabelWidth + rowWidth)) {
+                    Spacer(modifier = Modifier.width(dayLabelWidth))
+                    Row(modifier = Modifier.width(rowWidth), horizontalArrangement = Arrangement.spacedBy(cellSpacing)) {
+                        weekColumns.forEachIndexed { index, week ->
+                            val firstDay = week.first()
+                            val showLabel = index == 0 ||
+                                    firstDay.month != weekColumns[index - 1].first().month
+                            Box(modifier = Modifier.width(cellSize).height(headerHeight), contentAlignment = Alignment.Center) {
+                                if (showLabel) {
+                                    MyText.RowBody(
+                                        text = firstDay.month
+                                            .getDisplayName(TextStyle.SHORT, LocalLocale.current.platformLocale),
+                                        fontSize = 8.sp,
+                                        modifier = Modifier.align(Alignment.Center)
+                                    )
+                                }
                             }
                         }
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(cellSpacing))
                 Row {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(cellSpacing)) {
                         DayOfWeek.entries.forEach { dow ->
-                            Box(Modifier.height(32.dp).width(24.dp), contentAlignment = Alignment.Center) {
+                            Box(Modifier.height(cellSize).width(dayLabelWidth), contentAlignment = Alignment.Center) {
                                 if (dow.value % 2 == 1) {
                                     MyText.RowBody(
-                                        text = dow.getDisplayName(TextStyle.SHORT, LocalLocale.current.platformLocale).take(3),
-                                        fontSize = 9.sp,
+                                        text = dow.getDisplayName(TextStyle.SHORT, LocalLocale.current.platformLocale).take(1),
+                                        fontSize = 8.sp,
                                         modifier = Modifier.align(Alignment.CenterStart)
                                     )
                                 }
                             }
                         }
                     }
-                    Row(Modifier.horizontalScroll(scrollState), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(modifier = Modifier.width(rowWidth), horizontalArrangement = Arrangement.spacedBy(cellSpacing)) {
                         weekColumns.forEach { week ->
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(cellSpacing)) {
                                 for (dowIndex in 0 until 7) {
                                     val date = week.getOrNull(dowIndex)
                                     val inCycle = date != null &&
@@ -111,7 +120,8 @@ fun SpendingHeatmap(days: List<HeatmapDay>, cycleStart: LocalDate, cycleEnd: Loc
                                         baseColor = baseColor,
                                         refundColor = refundColor,
                                         emptyColor = emptyColor,
-                                        visible = inCycle
+                                        visible = inCycle,
+                                        size = cellSize
                                     )
                                 }
                             }
@@ -160,7 +170,7 @@ private fun HeatCell(
         if (spent != null && spent != 0L) {
             MyText.RowBody(
                 text = spent.abbreviateAmount(),
-                fontSize = 8.sp,
+                fontSize = 7.sp,
                 color = if (intensity >= 0.5f) Color.White else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = 1.dp)
             )

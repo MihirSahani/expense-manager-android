@@ -42,9 +42,10 @@ import com.example.core.database.entity.Category
 import com.example.core.database.models.CategoryIcon
 import com.example.core.database.models.CategoryType
 import com.example.core.database.projection.CategoryWithInfo
+import com.example.core.database.models.DefaultColors
 
 @Composable
-fun BudgetGroupCard(group: AnalysisGroup, color: Color) {
+fun BudgetGroupCard(group: AnalysisGroup, color: Color, onCategoryClick: (Int) -> Unit = {}) {
     var expanded by remember { mutableStateOf(true) }
     val progress = if (group.budget > 0) group.spent.toFloat() / group.budget.toFloat() else 0f
 
@@ -65,7 +66,7 @@ fun BudgetGroupCard(group: AnalysisGroup, color: Color) {
             ) {
                 Column {
                     MyText.RowHeader(group.name)
-                    if (group.budget != 0L) {
+                    if (group.allCategoriesBudgeted) {
                         MyText.RowBody("Budget spent")
                     }
                 }
@@ -82,26 +83,28 @@ fun BudgetGroupCard(group: AnalysisGroup, color: Color) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            if (group.allCategoriesBudgeted) {
+                Spacer(modifier = Modifier.height(8.dp))
 
-            LinearProgressIndicator(
-                progress = { progress.coerceAtMost(1f) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(CircleShape),
-                color = if (progress > 1f) MaterialTheme.colorScheme.error else color,
-                trackColor = color.copy(alpha = 0.2f),
-                gapSize = 0.dp
-            )
-
-            if (progress > 1f) {
-                MyText.RowBody(
-                    text = "Overspent!",
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 6.dp)
+                LinearProgressIndicator(
+                    progress = { progress.coerceAtMost(1f) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(CircleShape),
+                    color = if (progress > 1f) MaterialTheme.colorScheme.error else color,
+                    trackColor = color.copy(alpha = 0.2f),
+                    gapSize = 0.dp
                 )
+
+                if (progress > 1f) {
+                    MyText.RowBody(
+                        text = "Overspent!",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                }
             }
 
             AnimatedVisibility(
@@ -113,7 +116,7 @@ fun BudgetGroupCard(group: AnalysisGroup, color: Color) {
                     HorizontalDivider(modifier = Modifier.padding(bottom = 4.dp))
 
                     group.categories.forEach { category ->
-                        CategoryBreakdownItem(category)
+                        CategoryBreakdownItem(category, onCategoryClick)
                     }
                 }
             }
@@ -122,22 +125,45 @@ fun BudgetGroupCard(group: AnalysisGroup, color: Color) {
 }
 
 @Composable
-fun CategoryBreakdownItem(category: CategoryWithInfo) {
+fun CategoryBreakdownItem(category: CategoryWithInfo, onCategoryClick: (Int) -> Unit = {}) {
+    val budget = category.category.budgetPerCycle
+    val progress = if (budget != null && budget > 0) (category.spent ?: 0L).toFloat() / budget.toFloat() else null
+    val categoryColor = Color(category.category.color ?: DefaultColors.GRAY.hexValue)
+
     IconAndRow(
         icon = category.category.icon.imageVector,
-        bgColor = category.category.color
+        bgColor = category.category.color,
+        modifier = Modifier.clickable { onCategoryClick(category.category.id) }
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            MyText.RowHeader(category.category.name)
-            MyText.TransactionAmount(
-                amount = category.spent ?: 0L,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+        Column(Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                MyText.RowHeader(category.category.name)
+                MyText.TransactionAmount(
+                    amount = category.spent ?: 0L,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            if (progress != null) {
+                Spacer(modifier = Modifier.height(6.dp))
+
+                LinearProgressIndicator(
+                    progress = { progress.coerceAtMost(1f) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .clip(CircleShape),
+                    color = if (progress > 1f) MaterialTheme.colorScheme.error else categoryColor,
+                    trackColor = categoryColor.copy(alpha = 0.2f),
+                    gapSize = 0.dp
+                )
+            }
         }
     }
 }
@@ -160,11 +186,34 @@ private val dummyBudgetGroup = AnalysisGroup(
     )
 )
 
+private val dummyMixedBudgetGroup = AnalysisGroup(
+    name = "Disposables",
+    spent = 350,
+    budget = 200,
+    categories = listOf(
+        CategoryWithInfo(
+            category = Category(3, "Shopping", CategoryType.EXPENSE, 200, null, CategoryIcon.SHOPPING),
+            remainingBalance = 50,
+            spent = 150
+        ),
+        CategoryWithInfo(
+            // No budget set for this category, so the group bar is hidden while this
+            // category's own row also shows no bar.
+            category = Category(4, "Friends & Family", CategoryType.EXPENSE, null, null, CategoryIcon.SHOPPING),
+            remainingBalance = null,
+            spent = 200
+        )
+    )
+)
+
 @Preview(showBackground = true)
 @Composable
 fun BudgetGroupCardPreview() {
     FinancesTheme {
-        BudgetGroupCard(dummyBudgetGroup, MaterialTheme.colorScheme.primary)
+        Column {
+            BudgetGroupCard(dummyBudgetGroup, MaterialTheme.colorScheme.primary)
+            BudgetGroupCard(dummyMixedBudgetGroup, MaterialTheme.colorScheme.secondary)
+        }
     }
 }
 
@@ -172,6 +221,9 @@ fun BudgetGroupCardPreview() {
 @Composable
 fun BudgetGroupCardPreviewDark() {
     FinancesTheme(true) {
-        BudgetGroupCard(dummyBudgetGroup, MaterialTheme.colorScheme.primary)
+        Column {
+            BudgetGroupCard(dummyBudgetGroup, MaterialTheme.colorScheme.primary)
+            BudgetGroupCard(dummyMixedBudgetGroup, MaterialTheme.colorScheme.secondary)
+        }
     }
 }

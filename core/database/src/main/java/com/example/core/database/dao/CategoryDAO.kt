@@ -52,7 +52,8 @@ abstract class CategoryDAO {
 
     /**
      * Observes every category together with its remaining budget and amount spent within a
-     * cycle window.
+     * cycle window. Debit amounts add to the spend and credit amounts (refunds) subtract from
+     * it, matching `TransactionDAO.getDailyExpensesBetween`.
      *
      * @param start inclusive start of the cycle window, in epoch seconds. Defaults to the
      * beginning of time.
@@ -62,8 +63,8 @@ abstract class CategoryDAO {
      */
     @Query("""
         SELECT c.*, 
-               (c.budget_per_cycle - IFNULL(SUM(t.amount), 0)) AS remaining_balance,
-               SUM(t.amount) AS spent
+               (c.budget_per_cycle - IFNULL(SUM(CASE WHEN t.transaction_type = 'DEBIT' THEN t.amount ELSE -t.amount END), 0)) AS remaining_balance,
+               SUM(CASE WHEN t.transaction_type = 'DEBIT' THEN t.amount ELSE -t.amount END) AS spent
         FROM categories c
         LEFT JOIN transactions t ON t.category_id = c.id AND t.datetime BETWEEN :start AND :end
         GROUP BY c.id

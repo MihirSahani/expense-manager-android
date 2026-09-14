@@ -9,12 +9,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -43,9 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.analysis.ui.components.AnalysisTopSection
 import com.example.analysis.ui.components.BudgetGroupCard
-import com.example.analysis.ui.components.SpendingDonutChart
-import com.example.analysis.ui.components.SpendingHeatmap
 import com.example.analysis.ui.viewmodel.AnalysisGroup
 import com.example.analysis.ui.viewmodel.AnalysisUiState
 import com.example.analysis.ui.viewmodel.AnalysisViewModel
@@ -75,25 +70,23 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
-fun AnalysisScreen(vm: AnalysisViewModel = hiltViewModel()) {
+fun AnalysisScreen(vm: AnalysisViewModel = hiltViewModel(), onCategoryClick: (Int) -> Unit = {}) {
     val state by vm.analysisState.collectAsStateWithLifecycle()
 
-    AnalysisContent(state)
+    AnalysisContent(state, onCategoryClick)
 }
 
 @Composable
-fun AnalysisContent(state: AnalysisUiState) {
+fun AnalysisContent(state: AnalysisUiState, onCategoryClick: (Int) -> Unit = {}) {
     ScreenScaffold("Analysis") { paddingValues ->
         ListWrapper(paddingValues, scrollable = true) {
-            SpendingDonutChart(state)
+            AnalysisTopSection(state)
 
             MyText.SecondaryHeader("Budget Utilization")
 
-            BudgetGroupCard(state.necessities, MaterialTheme.colorScheme.primary)
-            BudgetGroupCard(state.disposables, MaterialTheme.colorScheme.secondary)
-            BudgetGroupCard(state.investments, MaterialTheme.colorScheme.tertiary)
-
-            SpendingHeatmap(state.heatmap, state.cycleStart, state.cycleEnd)
+            BudgetGroupCard(state.necessities, MaterialTheme.colorScheme.primary, onCategoryClick)
+            BudgetGroupCard(state.disposables, MaterialTheme.colorScheme.secondary, onCategoryClick)
+            BudgetGroupCard(state.investments, MaterialTheme.colorScheme.tertiary, onCategoryClick)
         }
     }
 }

@@ -21,7 +21,11 @@ data class AnalysisGroup(
     val spent: Long,
     val budget: Long,
     val categories: List<CategoryWithInfo>
-)
+) {
+    /** True only when every category in this group has a per-cycle budget set. */
+    val allCategoriesBudgeted: Boolean =
+        categories.isNotEmpty() && categories.all { it.category.budgetPerCycle != null }
+}
 
 /** A single day's total expense, used to render the analysis heatmap. */
 data class HeatmapDay(
