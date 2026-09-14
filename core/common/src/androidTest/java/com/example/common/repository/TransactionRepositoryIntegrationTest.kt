@@ -1,8 +1,10 @@
 package com.example.common.repository
 
+import androidx.paging.PagingSource
 import androidx.room3.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.example.common.model.TransactionFilter
 import com.example.core.database.AppDatabase
 import com.example.core.database.entity.Account
 import com.example.core.database.entity.Category
@@ -12,6 +14,7 @@ import com.example.core.database.models.AccountType
 import com.example.core.database.models.CategoryIcon
 import com.example.core.database.models.CategoryType
 import com.example.core.database.models.TransactionType
+import com.example.core.database.projection.TransactionWithCategory
 import com.example.datastore.Setting
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -320,6 +323,80 @@ class TransactionRepositoryIntegrationTest {
         val payeesAfterTagging = database.transactionDao().getPayeesBetween(0, Long.MAX_VALUE).first()
         assertNull(payeesAfterTagging.find { it.payee == "zomato" })
         assertEquals(1, payeesAfterTagging.size)
+    }
+
+    @Test
+    fun getFilteredTransactionsWithCategoryAppliesEveryCriterion() = runBlocking {
+        val food = category(1, "Food")
+        val transport = category(2, "Transport")
+        database.categoryDao().create(food)
+        database.categoryDao().create(transport)
+
+        repository.create(
+            listOf(
+                transaction(1, "Zomato", TransactionType.DEBIT, categoryId = food.id, amount = 100),
+                transaction(2, "Uber", TransactionType.DEBIT, categoryId = transport.id, amount = 500),
+                transaction(3, "Zomato", TransactionType.DEBIT, categoryId = food.id, amount = 1_000),
+                transaction(4, "Unknown Shop", TransactionType.DEBIT, categoryId = null, amount = 250)
+            )
+        )
+
+        // Category restriction: only the "food" category.
+        val foodOnly = loadFilteredPage(
+            TransactionFilter(categoryIds = setOf(food.id))
+        )
+        assertEquals(setOf(1, 3), foodOnly.map { it.id }.toSet())
+
+        // Uncategorized restriction: only transactions with no category.
+        val uncategorizedOnly = loadFilteredPage(
+            TransactionFilter(includeUncategorized = true)
+        )
+        assertEquals(setOf(4), uncategorizedOnly.map { it.id }.toSet())
+
+        // Category restriction combined with uncategorized.
+        val foodOrUncategorized = loadFilteredPage(
+            TransactionFilter(categoryIds = setOf(food.id), includeUncategorized = true)
+        )
+        assertEquals(setOf(1, 3, 4), foodOrUncategorized.map { it.id }.toSet())
+
+        // Amount range restriction.
+        val midRange = loadFilteredPage(
+            TransactionFilter(minAmount = 100, maxAmount = 500)
+        )
+        assertEquals(setOf(1, 2, 4), midRange.map { it.id }.toSet())
+
+        // Payee substring restriction (case-insensitive).
+        val zomatoOnly = loadFilteredPage(
+            TransactionFilter(payeeQuery = "ZOMATO")
+        )
+        assertEquals(setOf(1, 3), zomatoOnly.map { it.id }.toSet())
+
+        // Date range restriction (datetime is seeded to equal id).
+        val dateRange = loadFilteredPage(
+            TransactionFilter(startDate = 2, endDate = 3)
+        )
+        assertEquals(setOf(2, 3), dateRange.map { it.id }.toSet())
+
+        // Empty filter matches everything.
+        val everything = loadFilteredPage(TransactionFilter())
+        assertEquals(setOf(1, 2, 3, 4), everything.map { it.id }.toSet())
+    }
+
+    private suspend fun loadFilteredPage(filter: TransactionFilter): List<TransactionWithCategory> {
+        val pagingSource = database.transactionDao().getFilteredTransactionsWithCategory(
+            start = filter.startDate ?: 0L,
+            end = filter.endDate ?: Long.MAX_VALUE,
+            minAmount = filter.minAmount,
+            maxAmount = filter.maxAmount,
+            payeeQuery = filter.payeeQuery?.trim()?.lowercase()?.takeIf { it.isNotEmpty() },
+            categoryIds = filter.categoryIds,
+            categoryCount = filter.categoryIds.size,
+            includeUncategorized = filter.includeUncategorized
+        )
+        val result = pagingSource.load(
+            PagingSource.LoadParams.Refresh(key = null, loadSize = 20, placeholdersEnabled = false)
+        )
+        return (result as PagingSource.LoadResult.Page).data
     }
 
     private fun category(id: Int, name: String) = Category(

@@ -91,6 +91,67 @@ abstract class TransactionDAO {
     ): PagingSource<Int, TransactionWithCategory>
 
     /**
+     * Fetches transactions with their joined category info matching the transaction-history
+     * filter criteria, newest first, as a paged source. The category restriction (if any) matches
+     * transactions in [categoryIds] and/or, when [includeUncategorized] is `true`, transactions
+     * with no assigned category; it is skipped entirely when [categoryCount] is 0 and
+     * [includeUncategorized] is `false`.
+     *
+     * @param start inclusive lower bound on datetime, in epoch seconds.
+     * @param end inclusive upper bound on datetime, in epoch seconds.
+     * @param minAmount inclusive lower bound on amount, or `null` for no lower bound.
+     * @param maxAmount inclusive upper bound on amount, or `null` for no upper bound.
+     * @param payeeQuery a lowercased substring to match against payee names, or `null` for no
+     * payee restriction.
+     * @param categoryIds category ids to restrict results to.
+     * @param categoryCount the size of [categoryIds]; 0 (together with [includeUncategorized]
+     * being `false`) disables the category restriction.
+     * @param includeUncategorized whether transactions with no assigned category should also
+     * match.
+     * @return a [PagingSource] over the matching [TransactionWithCategory] rows.
+     */
+    @Query("" +
+            "SELECT " +
+                "t.id, " +
+                "t.payee, " +
+                "t.amount, " +
+                "t.transaction_type AS transactionType, " +
+                "t.datetime, " +
+                "c.icon AS categoryIcon, " +
+                "c.name AS categoryName, " +
+                "c.color AS categoryColor " +
+            "FROM " +
+                "transactions t " +
+            "LEFT JOIN " +
+                "categories c " +
+            "ON " +
+                "t.category_id = c.id " +
+            "WHERE " +
+                "t.datetime BETWEEN :start AND :end " +
+                "AND (:minAmount IS NULL OR t.amount >= :minAmount) " +
+                "AND (:maxAmount IS NULL OR t.amount <= :maxAmount) " +
+                "AND (:payeeQuery IS NULL OR t.payee LIKE '%' || :payeeQuery || '%') " +
+                "AND (" +
+                    "(:categoryCount = 0 AND :includeUncategorized = 0) " +
+                    "OR t.category_id IN (:categoryIds) " +
+                    "OR (:includeUncategorized = 1 AND t.category_id IS NULL)" +
+                ") " +
+            "ORDER BY " +
+                "t.datetime DESC"
+    )
+    abstract fun getFilteredTransactionsWithCategory(
+        start: Long,
+        end: Long,
+        minAmount: Long?,
+        maxAmount: Long?,
+        payeeQuery: String?,
+        categoryIds: Set<Int>,
+        categoryCount: Int,
+        includeUncategorized: Boolean
+    ): PagingSource<Int, TransactionWithCategory>
+
+
+    /**
      * Fetches the datetime of the most recent transaction against an `INCOME` category. Used to
      * detect the most recent salary-date cycle boundary.
      *

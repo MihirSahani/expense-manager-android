@@ -5,6 +5,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.room3.withWriteTransaction
 import com.example.common.model.CycleDailyExpenses
+import com.example.common.model.TransactionFilter
 import com.example.core.database.AppDatabase
 import com.example.core.database.dao.TransactionDAO
 import com.example.core.database.entity.Transaction
@@ -131,6 +132,32 @@ class TransactionRepository @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Observes transactions with category info matching [filter], as paged data, ignoring cycle
+     * boundaries (searches across all transactions). Used by the transaction history filter UI.
+     *
+     * @param filter the criteria to match. See [TransactionFilter].
+     */
+    fun getFilteredTransactionsWithCategory(
+        filter: TransactionFilter
+    ): Flow<PagingData<TransactionWithCategory>> {
+        return Pager(
+            config = PagingConfig(15),
+            pagingSourceFactory = {
+                dao.getFilteredTransactionsWithCategory(
+                    start = filter.startDate ?: 0L,
+                    end = filter.endDate ?: Long.MAX_VALUE,
+                    minAmount = filter.minAmount,
+                    maxAmount = filter.maxAmount,
+                    payeeQuery = filter.payeeQuery?.trim()?.lowercase()?.takeIf { it.isNotEmpty() },
+                    categoryIds = filter.categoryIds,
+                    categoryCount = filter.categoryIds.size,
+                    includeUncategorized = filter.includeUncategorized
+                )
+            }
+        ).flow
     }
 
     /**
